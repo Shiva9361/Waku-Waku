@@ -29,6 +29,27 @@ Assembler::Assembler()
     lookup_table["x8"] = "01000";
     lookup_table["x9"] = "01001";
     lookup_table["x10"] = "01010";
+    lookup_table["x11"] = "01011";
+    lookup_table["x12"] = "01100";
+    lookup_table["x13"] = "01101";
+    lookup_table["x14"] = "01110";
+    lookup_table["x15"] = "01111";
+    lookup_table["x16"] = "10000";
+    lookup_table["x17"] = "10001";
+    lookup_table["x18"] = "10010";
+    lookup_table["x19"] = "10011";
+    lookup_table["x20"] = "10100";
+    lookup_table["x21"] = "10101";
+    lookup_table["x22"] = "10110";
+    lookup_table["x23"] = "10111";
+    lookup_table["x24"] = "11000";
+    lookup_table["x25"] = "11001";
+    lookup_table["x26"] = "11010";
+    lookup_table["x27"] = "11011";
+    lookup_table["x28"] = "11100";
+    lookup_table["x29"] = "11101";
+    lookup_table["x30"] = "11110";
+    lookup_table["x31"] = "11111";
 }
 void Assembler::display(std::string file)
 {
