@@ -91,6 +91,42 @@ std::vector<int> Assembler::assemble(std::string file)
             int bin_instruction = std::stoi(instruction, nullptr, 2);
             result.push_back(bin_instruction);
         }
+        else if (tokens[0] == "sub")
+        {
+            std::string opcode = "0110011";
+            std::string rd = lookup_table[tokens[1]];
+            std::string func3 = "000";
+            std::string rs1 = lookup_table[tokens[2]];
+            std::string rs2 = lookup_table[tokens[3]];
+            std::string func7 = "0100000";
+            std::string instruction = func7 + rs2 + rs1 + func3 + rd + opcode;
+            int bin_instruction = std::stoi(instruction, nullptr, 2);
+            result.push_back(bin_instruction);
+        }
+        else if (tokens[0] == "mul")
+        {
+            std::string opcode = "0110011";
+            std::string rd = lookup_table[tokens[1]];
+            std::string func3 = "000";
+            std::string rs1 = lookup_table[tokens[2]];
+            std::string rs2 = lookup_table[tokens[3]];
+            std::string func7 = "0000001";
+            std::string instruction = func7 + rs2 + rs1 + func3 + rd + opcode;
+            int bin_instruction = std::stoi(instruction, nullptr, 2);
+            result.push_back(bin_instruction);
+        }
+        else if (tokens[0] == "div")
+        {
+            std::string opcode = "0110011";
+            std::string rd = lookup_table[tokens[1]];
+            std::string func3 = "100";
+            std::string rs1 = lookup_table[tokens[2]];
+            std::string rs2 = lookup_table[tokens[3]];
+            std::string func7 = "0000001";
+            std::string instruction = func7 + rs2 + rs1 + func3 + rd + opcode;
+            int bin_instruction = std::stoi(instruction, nullptr, 2);
+            result.push_back(bin_instruction);
+        }
     }
     return result;
 }
