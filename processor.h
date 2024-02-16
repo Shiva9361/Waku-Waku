@@ -5,7 +5,7 @@
 class Processor
 {
 private:
-    int memory[4096] = {0};
+    int memory[1024] = {0};
     Core cores[2] = {Core(), Core()};
     int clock;
     Assembler assembler;
