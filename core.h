@@ -10,6 +10,7 @@ private:
     int registers[32] = {0};
     int int_instruction;
     int pc;
+    int pc_i;
 
     std::string opcode;
     std::string rs1;
@@ -20,21 +21,22 @@ private:
     std::string func7;
 
 public:
-    Core();
+    Core(int pc);
     void fetch(int *memory);
     void decode();
-    void execute();
+    int execute();
     void mem(int *memory);
 };
 
-Core::Core()
+Core::Core(int pc)
 {
     // registers[2] = 2147483632; // Stack pointer
     registers[2] = 2;
     // registers[3] = 268435456;  // Global Pointer
     registers[3] = 3;
     registers[17] = 0;
-    pc = 0;
+    this->pc = pc;
+    this->pc_i = pc;
 }
 void Core::fetch(int memory[])
 {
@@ -51,7 +53,7 @@ void Core::decode()
     rs1 = instruction.substr(12, 5);
     if (opcode == "0000011")
     {
-        std::cout << instruction << std::endl;
+        
         rd = instruction.substr(20, 5);
         imm = instruction.substr(0, 12);
     }
@@ -66,9 +68,14 @@ void Core::decode()
         rs2 = instruction.substr(7, 5);
         imm = instruction.substr(0, 7) + instruction.substr(20, 5);
     }
+    else if (opcode == "1101111")
+    {
+        rd = instruction.substr(20, 5);
+        imm = instruction.substr(0, 20);
+    }
 }
 
-void Core::execute()
+int Core::execute()
 {
     if (opcode == "0110011")
     {
@@ -89,6 +96,13 @@ void Core::execute()
             registers[std::stoi(rd, nullptr, 2)] = registers[std::stoi(rs1, nullptr, 2)] / registers[std::stoi(rs2, nullptr, 2)];
         }
     }
+    else if (opcode == "1101111"){
+        
+        registers[std::stoi(rd, nullptr, 2)] = pc;
+        pc = std::stoi(imm, nullptr, 2)+pc_i;
+        std::cout<<"Jumped to "<<pc<<std::endl; 
+    }
+    return pc;
 }
 void Core::mem(int *memory)
 {

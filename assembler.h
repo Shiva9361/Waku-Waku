@@ -60,13 +60,40 @@ void Assembler::display(std::string file)
     {
         std::cout << line << std::endl;
     }
+    File.close();
 }
 
 std::vector<int> Assembler::assemble(std::string file)
 {
     std::vector<int> result;
+    std::map<std::string,int> labels;
     File.open(file);
     std::string line;
+    int lc = 0;
+    // Label parser
+    while (std::getline(File, line)){
+        if (line == "")
+        {
+            lc++;
+            continue;
+        }
+        std::vector<std::string> tokens;
+        std::stringstream stream(line);
+        std::string token;
+       
+        while (std::getline(stream, token, ' '))
+        {
+            tokens.push_back(token);
+        }
+        if (tokens[0][tokens[0].length()-1]==':'){
+            labels[tokens[0].substr(0,tokens[0].length()-1)] = lc;
+        }
+        lc++;
+    }
+    File.close();
+    
+    File.open(file);
+    int ic=0; 
     while (std::getline(File, line))
     {
         if (line == "")
@@ -79,6 +106,17 @@ std::vector<int> Assembler::assemble(std::string file)
         while (std::getline(stream, token, ' '))
         {
             tokens.push_back(token);
+        }
+        if (tokens[0]==".data"){
+            while(std::getline(File,line)){
+                while (std::getline(stream, token, ' '))
+                {
+                    tokens.push_back(token);
+                }
+                if (tokens[0] == ".text") {
+                    break;
+                }
+            }
         }
         if (tokens[0] == "add")
         {
@@ -141,7 +179,6 @@ std::vector<int> Assembler::assemble(std::string file)
                 sub_tokens.push_back(token);
             }
             std::string rs1 = lookup_table[sub_tokens[1].substr(0, (sub_tokens[1].length() - 1))];
-
             std::bitset<12> bin_imm(std::stoi(sub_tokens[0], nullptr, 10));
             std::string imm = bin_imm.to_string();
             std::string instruction = imm + rs1 + func3 + rd + opcode;
@@ -170,6 +207,18 @@ std::vector<int> Assembler::assemble(std::string file)
             int bin_instruction = std::stoi(instruction, nullptr, 2);
             result.push_back(bin_instruction);
         }
+        else if (tokens[0]=="jal"){
+            std::string opcode = "1101111"; 
+            std::string rd = lookup_table[tokens[1]];
+            int int_imm = labels[tokens[2]]; 
+            std::bitset<18> bin_imm(int_imm);
+            std::string imm = bin_imm.to_string();
+            std::string instruction = imm + rd + opcode;
+            int bin_instruction = std::stoi(instruction, nullptr, 2);
+            result.push_back(bin_instruction);
+        }
+        ic++;
     }
+    File.close();
     return result;
 }
