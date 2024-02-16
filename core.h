@@ -24,7 +24,6 @@ public:
     void fetch(int *memory);
     void decode();
     void execute();
-    void execute_R();
     void mem(int *memory);
 };
 
@@ -68,14 +67,8 @@ void Core::decode()
         imm = instruction.substr(0, 7) + instruction.substr(20, 5);
     }
 }
+
 void Core::execute()
-{
-    if (opcode == "0110011")
-    {
-        execute_R();
-    }
-}
-void Core::execute_R()
 {
     if (opcode == "0110011")
     {
