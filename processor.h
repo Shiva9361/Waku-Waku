@@ -26,33 +26,39 @@ Processor::Processor(std::string file1, std::string file2)
     {
         memory[index] = instructions1.at(index);
     }
-    for (int index = 858; index-858 < instructions2.size(); index++)
+    for (int index = 858; index - 858 < instructions2.size(); index++)
     {
-        memory[index] = instructions2.at(index-858);
+        memory[index] = instructions2.at(index - 858);
     }
-    //memory[8] = 7;
-    int i=0,j=0;
-    while(i<instructions1.size()&& j<instructions2.size())
+
+    memory[8] = 7;
+    int i = 0, j = 0;
+    while (i < instructions1.size() && j < instructions2.size())
     {
-        cores[0].fetch(memory);cores[1].fetch(memory);
-        cores[0].decode();cores[1].decode();
-        i = cores[0].execute();j = cores[1].execute()-858;
-        cores[0].mem(memory);cores[1].mem(memory);
+        cores[0].fetch(memory);
+        cores[1].fetch(memory);
+        cores[0].decode();
+        cores[1].decode();
+        i = cores[0].execute();
+        j = cores[1].execute() - 858;
+        cores[0].mem(memory);
+        cores[1].mem(memory);
         clock++;
     }
-    while(i<instructions1.size()){
+    while (i < instructions1.size())
+    {
         cores[0].fetch(memory);
         cores[0].decode();
         i = cores[0].execute();
         cores[0].mem(memory);
         clock++;
     }
-    while(j<instructions2.size()){
+    while (j < instructions2.size())
+    {
         cores[1].fetch(memory);
         cores[1].decode();
-        j = cores[1].execute()-858;
+        j = cores[1].execute() - 858;
         cores[1].mem(memory);
         clock++;
-
     }
 }

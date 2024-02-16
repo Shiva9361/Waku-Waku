@@ -1,7 +1,9 @@
 add x1 x2 x3
+mul x2 x3 x2
 sa:
 mul x2 x3 x2
 jal x0 sa
-div x2 x3 x3
 
+div x2 x3 x3
 sw x3 8(x17)
+

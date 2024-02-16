@@ -66,34 +66,35 @@ void Assembler::display(std::string file)
 std::vector<int> Assembler::assemble(std::string file)
 {
     std::vector<int> result;
-    std::map<std::string,int> labels;
+    std::map<std::string, int> labels;
     File.open(file);
     std::string line;
     int lc = 0;
     // Label parser
-    while (std::getline(File, line)){
+    while (std::getline(File, line))
+    {
         if (line == "")
         {
-            lc++;
             continue;
         }
         std::vector<std::string> tokens;
         std::stringstream stream(line);
         std::string token;
-       
+
         while (std::getline(stream, token, ' '))
         {
             tokens.push_back(token);
         }
-        if (tokens[0][tokens[0].length()-1]==':'){
-            labels[tokens[0].substr(0,tokens[0].length()-1)] = lc;
+        if (tokens[0][tokens[0].length() - 1] == ':')
+        {
+            labels[tokens[0].substr(0, tokens[0].length() - 1)] = lc;
         }
         lc++;
     }
     File.close();
-    
+
     File.open(file);
-    int ic=0; 
+    int ic = 0;
     while (std::getline(File, line))
     {
         if (line == "")
@@ -107,13 +108,16 @@ std::vector<int> Assembler::assemble(std::string file)
         {
             tokens.push_back(token);
         }
-        if (tokens[0]==".data"){
-            while(std::getline(File,line)){
+        if (tokens[0] == ".data")
+        {
+            while (std::getline(File, line))
+            {
                 while (std::getline(stream, token, ' '))
                 {
                     tokens.push_back(token);
                 }
-                if (tokens[0] == ".text") {
+                if (tokens[0] == ".text")
+                {
                     break;
                 }
             }
@@ -207,14 +211,17 @@ std::vector<int> Assembler::assemble(std::string file)
             int bin_instruction = std::stoi(instruction, nullptr, 2);
             result.push_back(bin_instruction);
         }
-        else if (tokens[0]=="jal"){
-            std::string opcode = "1101111"; 
+        else if (tokens[0] == "jal")
+        {
+            // std::cout << ic << " " << labels[tokens[2]] << std::endl;
+            std::string opcode = "1101111";
             std::string rd = lookup_table[tokens[1]];
-            int int_imm = labels[tokens[2]]; 
-            std::bitset<18> bin_imm(int_imm);
+            std::cout << labels[tokens[2]];
+            int int_imm = labels[tokens[2]] - ic;
+            std::bitset<20> bin_imm(int_imm);
             std::string imm = bin_imm.to_string();
             std::string instruction = imm + rd + opcode;
-            int bin_instruction = std::stoi(instruction, nullptr, 2);
+            int bin_instruction = bin_to_int(instruction);
             result.push_back(bin_instruction);
         }
         ic++;
