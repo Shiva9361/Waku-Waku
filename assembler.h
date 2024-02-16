@@ -3,6 +3,7 @@
 #include <vector>
 #include <sstream>
 #include <map>
+#include <bitset>
 
 class Assembler
 {
@@ -124,6 +125,48 @@ std::vector<int> Assembler::assemble(std::string file)
             std::string rs2 = lookup_table[tokens[3]];
             std::string func7 = "0000001";
             std::string instruction = func7 + rs2 + rs1 + func3 + rd + opcode;
+            int bin_instruction = std::stoi(instruction, nullptr, 2);
+            result.push_back(bin_instruction);
+        }
+        else if (tokens[0] == "lw")
+        {
+            std::string opcode = "0000011";
+            std::string rd = lookup_table[tokens[1]];
+            std::string func3 = "010";
+            std::vector<std::string> sub_tokens;
+            std::stringstream stream2(tokens[2]);
+            while (std::getline(stream2, token, '('))
+            {
+
+                sub_tokens.push_back(token);
+            }
+            std::string rs1 = lookup_table[sub_tokens[1].substr(0, (sub_tokens[1].length() - 1))];
+
+            std::bitset<12> bin_imm(std::stoi(sub_tokens[0], nullptr, 10));
+            std::string imm = bin_imm.to_string();
+            std::string instruction = imm + rs1 + func3 + rd + opcode;
+            int bin_instruction = std::stoi(instruction, nullptr, 2);
+            result.push_back(bin_instruction);
+        }
+        else if (tokens[0] == "sw")
+        {
+            std::string opcode = "0100011";
+            std::string rs1 = lookup_table[tokens[1]];
+            std::string func3 = "010";
+            std::vector<std::string> sub_tokens;
+            std::stringstream stream2(tokens[2]);
+            while (std::getline(stream2, token, '('))
+            {
+
+                sub_tokens.push_back(token);
+            }
+            std::string rs2 = lookup_table[sub_tokens[1].substr(0, (sub_tokens[1].length() - 1))];
+
+            std::bitset<12> bin_imm(std::stoi(sub_tokens[0], nullptr, 10));
+            std::string imm = bin_imm.to_string();
+            std::string imm2 = imm.substr(0, 7);
+            std::string imm1 = imm.substr(7, 5);
+            std::string instruction = imm2 + rs2 + rs1 + func3 + imm1 + opcode;
             int bin_instruction = std::stoi(instruction, nullptr, 2);
             result.push_back(bin_instruction);
         }

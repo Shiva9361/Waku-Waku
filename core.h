@@ -11,20 +11,30 @@ private:
     int int_instruction;
     int pc;
 
+    std::string opcode;
+    std::string rs1;
+    std::string rs2;
+    std::string rd;
+    std::string imm;
+    std::string func3;
+    std::string func7;
+
 public:
     Core();
     void fetch(int *memory);
-    void execute(std::string opcode, std::string rd, std::string func3, std::string rs1, std::string rs2, std::string func7);
     void decode();
+    void execute();
+    void execute_R();
+    void mem(int *memory);
 };
 
 Core::Core()
 {
-    // registers = ;
     // registers[2] = 2147483632; // Stack pointer
     registers[2] = 2;
     // registers[3] = 268435456;  // Global Pointer
     registers[3] = 3;
+    registers[17] = 0;
     pc = 0;
 }
 void Core::fetch(int memory[])
@@ -37,15 +47,35 @@ void Core::decode()
     std::bitset<32> bin_instruction(int_instruction);
     std::string instruction = bin_instruction.to_string();
 
-    std::string opcode = instruction.substr(25, 7);
-    std::string rd = instruction.substr(20, 5);
-    std::string func3 = instruction.substr(17, 3);
-    std::string rs1 = instruction.substr(12, 5);
-    std::string rs2 = instruction.substr(7, 5);
-    std::string func7 = instruction.substr(0, 7);
-    execute(opcode, rd, func3, rs1, rs2, func7);
+    opcode = instruction.substr(25, 7);
+    func3 = instruction.substr(17, 3);
+    rs1 = instruction.substr(12, 5);
+    if (opcode == "0000011")
+    {
+        std::cout << instruction << std::endl;
+        rd = instruction.substr(20, 5);
+        imm = instruction.substr(0, 12);
+    }
+    else if (opcode == "0110011")
+    {
+        rd = instruction.substr(20, 5);
+        rs2 = instruction.substr(7, 5);
+        func7 = instruction.substr(0, 7);
+    }
+    else if (opcode == "0100011")
+    {
+        rs2 = instruction.substr(7, 5);
+        imm = instruction.substr(0, 7) + instruction.substr(20, 5);
+    }
 }
-void Core::execute(std::string opcode, std::string rd, std::string func3, std::string rs1, std::string rs2, std::string func7)
+void Core::execute()
+{
+    if (opcode == "0110011")
+    {
+        execute_R();
+    }
+}
+void Core::execute_R()
 {
     if (opcode == "0110011")
     {
@@ -65,6 +95,22 @@ void Core::execute(std::string opcode, std::string rd, std::string func3, std::s
         {
             registers[std::stoi(rd, nullptr, 2)] = registers[std::stoi(rs1, nullptr, 2)] / registers[std::stoi(rs2, nullptr, 2)];
         }
-        std::cout << registers[std::stoi(rd, nullptr, 2)] << " " << rd << std::endl;
+    }
+}
+void Core::mem(int *memory)
+{
+    if (opcode == "0000011")
+    {
+        if (func3 == "010")
+        {
+            registers[std::stoi(rd, nullptr, 2)] = memory[registers[std::stoi(rs1, nullptr, 2)] + std::stoi(imm, nullptr, 2)];
+        }
+    }
+    else if (opcode == "0100011")
+    {
+        if (func3 == "010")
+        {
+            memory[registers[std::stoi(rs2, nullptr, 2)] + std::stoi(imm, nullptr, 2)] = registers[std::stoi(rs1, nullptr, 2)];
+        }
     }
 }
