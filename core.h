@@ -130,7 +130,7 @@ int Core::execute()
     else if (opcode == "1101111")
     {
         registers[std::stoi(rd, nullptr, 2)] = pc;
-        pc = std::stoi(imm, nullptr, 2) + pc_i;
+        pc = std::stoi(imm, nullptr, 2);
         std::cout << "Jumped to " << pc << std::endl;
     }
     else if (opcode == "1100011")
