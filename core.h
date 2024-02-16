@@ -53,7 +53,6 @@ void Core::decode()
     rs1 = instruction.substr(12, 5);
     if (opcode == "0000011")
     {
-        
         rd = instruction.substr(20, 5);
         imm = instruction.substr(0, 12);
     }
@@ -72,6 +71,11 @@ void Core::decode()
     {
         rd = instruction.substr(20, 5);
         imm = instruction.substr(0, 20);
+    }
+    else if(opcode == "1100011")
+    {
+        rs2 = instruction.substr(7, 5);
+        imm = instruction.substr(0, 7) + instruction.substr(20, 5);
     }
 }
 
@@ -97,10 +101,16 @@ int Core::execute()
         }
     }
     else if (opcode == "1101111"){
-        
         registers[std::stoi(rd, nullptr, 2)] = pc;
         pc = std::stoi(imm, nullptr, 2)+pc_i;
         std::cout<<"Jumped to "<<pc<<std::endl; 
+    }
+    else if(opcode == "1100011"){
+        if(func3 == "001"){
+            if(registers[std::stoi(rs1, nullptr, 2)] != registers[std::stoi(rs2, nullptr, 2)]){
+                 
+            }
+        }
     }
     return pc;
 }
