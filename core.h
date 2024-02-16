@@ -26,7 +26,6 @@ int bin_to_int(std::string bin)
         }
         w *= 2;
     }
-    std::cout << std::endl;
     return r;
 }
 class Core
