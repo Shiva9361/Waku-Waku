@@ -1,6 +1,9 @@
 #include "processor.h"
 
-int main(){
-    Processor processsor;
+int main()
+{
+
+    Processor processsor("test.txt", "");
+
     return 0;
 }
