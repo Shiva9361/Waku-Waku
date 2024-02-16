@@ -214,12 +214,11 @@ std::vector<int> Assembler::assemble(std::string file)
             // std::cout << ic << " " << labels[tokens[2]] << std::endl;
             std::string opcode = "1101111";
             std::string rd = lookup_table[tokens[1]];
-            std::cout << labels[tokens[2]];
             int int_imm = labels[tokens[2]] - ic;
             std::bitset<20> bin_imm(int_imm);
             std::string imm = bin_imm.to_string();
             std::string instruction = imm + rd + opcode;
-            int bin_instruction = std::stoi(instruction, nullptr, 2);
+            int bin_instruction = bin_to_int(instruction);
             result.push_back(bin_instruction);
         }
         else if (tokens[0] == "bne")
