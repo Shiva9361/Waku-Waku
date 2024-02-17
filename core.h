@@ -28,6 +28,7 @@ int bin_to_int(std::string bin)
     }
     return r;
 }
+
 class Core
 {
 private:
@@ -54,6 +55,7 @@ public:
 
 Core::Core(int pc)
 {
+    registers[0] = 0; // x0 is hardwired to 0
     // registers[2] = 2147483632; // Stack pointer
     registers[2] = 2;
     // registers[3] = 268435456;  // Global Pointer
@@ -107,7 +109,7 @@ void Core::decode()
 
 int Core::execute()
 {
-    if (opcode == "0110011")
+    if (opcode == "0110011" && rd != "00000")
     {
         if (func3 == "000" && func7 == "0000000")
         {
@@ -128,7 +130,7 @@ int Core::execute()
     }
     else if (opcode == "1101111")
     {
-        registers[std::stoi(rd, nullptr, 2)] = pc;
+        if(rd != "00000") registers[std::stoi(rd, nullptr, 2)] = pc;
         int int_imm = bin_to_int(imm);
         if (int_imm >= 0)
         {
@@ -147,6 +149,16 @@ int Core::execute()
         {
             if (registers[std::stoi(rs1, nullptr, 2)] != registers[std::stoi(rs2, nullptr, 2)])
             {
+                int int_imm = bin_to_int(imm);
+                if (int_imm >= 0)
+                {
+                    pc = pc + bin_to_int(imm) - 1;
+                }
+                else
+                {
+                    pc = pc + bin_to_int(imm);
+                }
+                std::cout << "Jumped to " << pc << std::endl;
             }
         }
     }
@@ -158,14 +170,15 @@ void Core::mem(int *memory)
     {
         if (func3 == "010")
         {
-            registers[std::stoi(rd, nullptr, 2)] = memory[registers[std::stoi(rs1, nullptr, 2)] + std::stoi(imm, nullptr, 2)];
+            if(rd != "00000") registers[std::stoi(rd, nullptr, 2)] = memory[registers[std::stoi(rs1, nullptr, 2)] + bin_to_int(imm)];
         }
     }
     else if (opcode == "0100011")
     {
         if (func3 == "010")
         {
-            memory[registers[std::stoi(rs2, nullptr, 2)] + std::stoi(imm, nullptr, 2)] = registers[std::stoi(rs1, nullptr, 2)];
+            memory[registers[std::stoi(rs2, nullptr, 2)] + bin_to_int(imm)] = registers[std::stoi(rs1, nullptr, 2)];
         }
     }
+    //std::cout << registers[0] << std::endl;
 }

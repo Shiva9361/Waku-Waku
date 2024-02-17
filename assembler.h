@@ -179,14 +179,13 @@ std::vector<int> Assembler::assemble(std::string file)
             std::stringstream stream2(tokens[2]);
             while (std::getline(stream2, token, '('))
             {
-
                 sub_tokens.push_back(token);
             }
             std::string rs1 = lookup_table[sub_tokens[1].substr(0, (sub_tokens[1].length() - 1))];
             std::bitset<12> bin_imm(std::stoi(sub_tokens[0], nullptr, 10));
             std::string imm = bin_imm.to_string();
             std::string instruction = imm + rs1 + func3 + rd + opcode;
-            int bin_instruction = std::stoi(instruction, nullptr, 2);
+            int bin_instruction = bin_to_int(instruction);
             result.push_back(bin_instruction);
         }
         else if (tokens[0] == "sw")
@@ -211,7 +210,7 @@ std::vector<int> Assembler::assemble(std::string file)
         }
         else if (tokens[0] == "jal")
         {
-            // std::cout << ic << " " << labels[tokens[2]] << std::endl;
+            //std::cout << ic << " " << labels[tokens[2]] << std::endl;
             std::string opcode = "1101111";
             std::string rd = lookup_table[tokens[1]];
             int int_imm = labels[tokens[2]] - ic;
@@ -227,13 +226,13 @@ std::vector<int> Assembler::assemble(std::string file)
             std::string func3 = "001";
             std::string rs1 = lookup_table[tokens[1]];
             std::string rs2 = lookup_table[tokens[2]];
-            int int_imm = labels[tokens[3]];
+            int int_imm = labels[tokens[3]] - ic;
             std::bitset<12> bin_imm(int_imm);
             std::string imm = bin_imm.to_string();
             std::string imm2 = imm.substr(0, 7);
             std::string imm1 = imm.substr(7, 5);
             std::string instruction = imm2 + rs2 + rs1 + func3 + imm1 + opcode;
-            int bin_instruction = std::stoi(instruction, nullptr, 2);
+            int bin_instruction = bin_to_int(instruction);
             result.push_back(bin_instruction);
         }
         ic++;

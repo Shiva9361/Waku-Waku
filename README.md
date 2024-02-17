@@ -1,11 +1,25 @@
 # Waku-Waku
 
+## 17/02/2024 1 am
+
+We decided to partition the memory for each core based on RISC-V ISA.
+Learnt to close the current file before opening the next one (lol).
+Decided to read the input file once before encoding it to find and store the labels.
+To execute branch and jump instructions, we decided to use 'std::stoi()' to retrieve the immediate values from the encoded instructions.
+But the program counter started to act as weird as possible.
+Took an eternity to figure out wth is happening.
+The culprit turns out to be 'std::stoi()'(lol).
+It is converting the binary string to its unsigned value.
+So had to create our own function to convert a binary string to its 2's complement value.
+Now the processor also supports 'lw', 'sw', 'jal', 'bne'.
+
 ## 16/02/2024 5:30 pm
 
 We decided to make an assembler which reads a text file having assembly code.
-We encode each line/instruction in the code into binary format based on RISC-V ISA. 
+We encode each line/instruction of the code into binary format based on RISC-V ISA. 
 We then convert the binary string to an integer and store it in the memory.
-The core then fetches this instruction, converts it into binary string, decodes the instruction and executes it.
+The core then fetches this instruction, converts it back into binary string, decodes the instruction and executes it.
+The processor at this point supports 'add', 'sub', 'mul', 'div'.
 
 ## 15/02/2024 10:15 pm
 
