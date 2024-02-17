@@ -235,6 +235,19 @@ std::vector<int> Assembler::assemble(std::string file)
             int bin_instruction = bin_to_int(instruction);
             result.push_back(bin_instruction);
         }
+        else if (tokens[0] == "addi")
+        {
+            std::string opcode = "0010011";
+            std::string rd = lookup_table[tokens[1]];
+            std::string func3 = "000";
+            std::string rs1 = lookup_table[tokens[2]];
+            int int_imm = std::stoi(tokens[3]);
+            std::bitset<12> bin_imm(int_imm);
+            std::string imm = bin_imm.to_string();
+            std::string instruction = imm + rs1 + func3 + rd + opcode;
+            int bin_instruction = bin_to_int(instruction);
+            result.push_back(bin_instruction);
+        }
         ic++;
     }
     File.close();

@@ -105,6 +105,12 @@ void Core::decode()
         rs2 = instruction.substr(7, 5);
         imm = instruction.substr(0, 7) + instruction.substr(20, 5);
     }
+    else if (opcode == "0010011")
+    {
+        rd = instruction.substr(20, 5);
+        imm = instruction.substr(0, 12);
+        std::cout << imm;
+    }
 }
 
 int Core::execute()
@@ -160,6 +166,13 @@ int Core::execute()
                 }
                 std::cout << "Jumped to " << pc << std::endl;
             }
+        }
+    }
+    else if (opcode == "0010011")
+    {
+        if (func3 == "000")
+        {
+            if(rd != "00000") registers[std::stoi(rd, nullptr, 2)] = registers[std::stoi(rs1, nullptr, 2)] + bin_to_int(imm);
         }
     }
     return pc;
