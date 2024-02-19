@@ -1,3 +1,7 @@
+.data
+arr: .word 1 2 3 4 5
+.text
+la x10 arr
 add x0 x2 x3
 mul x2 x3 x2
 

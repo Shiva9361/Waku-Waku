@@ -109,7 +109,6 @@ void Core::decode()
     {
         rd = instruction.substr(20, 5);
         imm = instruction.substr(0, 12);
-        std::cout << imm;
     }
 }
 
@@ -136,7 +135,8 @@ int Core::execute()
     }
     else if (opcode == "1101111")
     {
-        if(rd != "00000") registers[std::stoi(rd, nullptr, 2)] = pc;
+        if (rd != "00000")
+            registers[std::stoi(rd, nullptr, 2)] = pc;
         int int_imm = bin_to_int(imm);
         if (int_imm >= 0)
         {
@@ -172,7 +172,10 @@ int Core::execute()
     {
         if (func3 == "000")
         {
-            if(rd != "00000") registers[std::stoi(rd, nullptr, 2)] = registers[std::stoi(rs1, nullptr, 2)] + bin_to_int(imm);
+            if (rd != "00000")
+            {
+                registers[std::stoi(rd, nullptr, 2)] = registers[std::stoi(rs1, nullptr, 2)] + bin_to_int(imm);
+            }
         }
     }
     return pc;
@@ -183,7 +186,8 @@ void Core::mem(int *memory)
     {
         if (func3 == "010")
         {
-            if(rd != "00000") registers[std::stoi(rd, nullptr, 2)] = memory[registers[std::stoi(rs1, nullptr, 2)] + bin_to_int(imm)];
+            if (rd != "00000")
+                registers[std::stoi(rd, nullptr, 2)] = memory[registers[std::stoi(rs1, nullptr, 2)] + bin_to_int(imm)];
         }
     }
     else if (opcode == "0100011")
@@ -193,5 +197,5 @@ void Core::mem(int *memory)
             memory[registers[std::stoi(rs2, nullptr, 2)] + bin_to_int(imm)] = registers[std::stoi(rs1, nullptr, 2)];
         }
     }
-    //std::cout << registers[0] << std::endl;
+    // std::cout << registers[0] << std::endl;
 }

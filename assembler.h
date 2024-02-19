@@ -14,7 +14,7 @@ public:
     std::ifstream File;
 
     void display(std::string file);
-    std::vector<int> assemble(std::string file);
+    std::pair<std::vector<int>, std::vector<int>> assemble(std::string file);
     Assembler();
 };
 Assembler::Assembler()
@@ -63,8 +63,10 @@ void Assembler::display(std::string file)
     File.close();
 }
 
-std::vector<int> Assembler::assemble(std::string file)
+std::pair<std::vector<int>, std::vector<int>> Assembler::assemble(std::string file)
 {
+    std::pair<std::vector<int>, std::vector<int>> result_pair;
+    std::vector<int> data;
     std::vector<int> result;
     std::map<std::string, int> labels;
     File.open(file);
@@ -116,67 +118,80 @@ std::vector<int> Assembler::assemble(std::string file)
                 {
                     tokens.push_back(token);
                 }
+                if (tokens[0][tokens[0].length() - 1] == ':')
+                {
+                    if (tokens[1] == ".word")
+                    {
+                    }
+                }
+
                 if (tokens[0] == ".text")
                 {
                     break;
                 }
             }
         }
-        if (tokens[0] == "add")
+        int index = 0;
+        if (tokens[0][tokens[0].length() - 1] == ':')
+        {
+            index++;
+        }
+
+        if (tokens[index] == "add")
         {
             std::string opcode = "0110011";
-            std::string rd = lookup_table[tokens[1]];
+            std::string rd = lookup_table[tokens[index + 1]];
             std::string func3 = "000";
-            std::string rs1 = lookup_table[tokens[2]];
-            std::string rs2 = lookup_table[tokens[3]];
+            std::string rs1 = lookup_table[tokens[index + 2]];
+            std::string rs2 = lookup_table[tokens[index + 3]];
             std::string func7 = "0000000";
             std::string instruction = func7 + rs2 + rs1 + func3 + rd + opcode;
             int bin_instruction = std::stoi(instruction, nullptr, 2);
             result.push_back(bin_instruction);
         }
-        else if (tokens[0] == "sub")
+        else if (tokens[index] == "sub")
         {
             std::string opcode = "0110011";
-            std::string rd = lookup_table[tokens[1]];
+            std::string rd = lookup_table[tokens[index + 1]];
             std::string func3 = "000";
-            std::string rs1 = lookup_table[tokens[2]];
-            std::string rs2 = lookup_table[tokens[3]];
+            std::string rs1 = lookup_table[tokens[index + 2]];
+            std::string rs2 = lookup_table[tokens[index + 3]];
             std::string func7 = "0100000";
             std::string instruction = func7 + rs2 + rs1 + func3 + rd + opcode;
             int bin_instruction = std::stoi(instruction, nullptr, 2);
             result.push_back(bin_instruction);
         }
-        else if (tokens[0] == "mul")
+        else if (tokens[index] == "mul")
         {
             std::string opcode = "0110011";
-            std::string rd = lookup_table[tokens[1]];
+            std::string rd = lookup_table[tokens[index + 1]];
             std::string func3 = "000";
-            std::string rs1 = lookup_table[tokens[2]];
-            std::string rs2 = lookup_table[tokens[3]];
+            std::string rs1 = lookup_table[tokens[index + 2]];
+            std::string rs2 = lookup_table[tokens[index + 3]];
             std::string func7 = "0000001";
             std::string instruction = func7 + rs2 + rs1 + func3 + rd + opcode;
             int bin_instruction = std::stoi(instruction, nullptr, 2);
             result.push_back(bin_instruction);
         }
-        else if (tokens[0] == "div")
+        else if (tokens[index] == "div")
         {
             std::string opcode = "0110011";
-            std::string rd = lookup_table[tokens[1]];
+            std::string rd = lookup_table[tokens[index + 1]];
             std::string func3 = "100";
-            std::string rs1 = lookup_table[tokens[2]];
-            std::string rs2 = lookup_table[tokens[3]];
+            std::string rs1 = lookup_table[tokens[index + 2]];
+            std::string rs2 = lookup_table[tokens[index + 3]];
             std::string func7 = "0000001";
             std::string instruction = func7 + rs2 + rs1 + func3 + rd + opcode;
             int bin_instruction = std::stoi(instruction, nullptr, 2);
             result.push_back(bin_instruction);
         }
-        else if (tokens[0] == "lw")
+        else if (tokens[index] == "lw")
         {
             std::string opcode = "0000011";
-            std::string rd = lookup_table[tokens[1]];
+            std::string rd = lookup_table[tokens[index + 1]];
             std::string func3 = "010";
             std::vector<std::string> sub_tokens;
-            std::stringstream stream2(tokens[2]);
+            std::stringstream stream2(tokens[index + 2]);
             while (std::getline(stream2, token, '('))
             {
                 sub_tokens.push_back(token);
@@ -188,13 +203,13 @@ std::vector<int> Assembler::assemble(std::string file)
             int bin_instruction = bin_to_int(instruction);
             result.push_back(bin_instruction);
         }
-        else if (tokens[0] == "sw")
+        else if (tokens[index] == "sw")
         {
             std::string opcode = "0100011";
-            std::string rs1 = lookup_table[tokens[1]];
+            std::string rs1 = lookup_table[tokens[index + 1]];
             std::string func3 = "010";
             std::vector<std::string> sub_tokens;
-            std::stringstream stream2(tokens[2]);
+            std::stringstream stream2(tokens[index + 2]);
             while (std::getline(stream2, token, '('))
             {
                 sub_tokens.push_back(token);
@@ -208,25 +223,25 @@ std::vector<int> Assembler::assemble(std::string file)
             int bin_instruction = std::stoi(instruction, nullptr, 2);
             result.push_back(bin_instruction);
         }
-        else if (tokens[0] == "jal")
+        else if (tokens[index] == "jal")
         {
-            //std::cout << ic << " " << labels[tokens[2]] << std::endl;
+            // std::cout << ic << " " << labels[tokens[2]] << std::endl;
             std::string opcode = "1101111";
-            std::string rd = lookup_table[tokens[1]];
-            int int_imm = labels[tokens[2]] - ic;
+            std::string rd = lookup_table[tokens[index + 1]];
+            int int_imm = labels[tokens[index + 2]] - ic;
             std::bitset<20> bin_imm(int_imm);
             std::string imm = bin_imm.to_string();
             std::string instruction = imm + rd + opcode;
             int bin_instruction = bin_to_int(instruction);
             result.push_back(bin_instruction);
         }
-        else if (tokens[0] == "bne")
+        else if (tokens[index] == "bne")
         {
             std::string opcode = "1100011";
             std::string func3 = "001";
-            std::string rs1 = lookup_table[tokens[1]];
-            std::string rs2 = lookup_table[tokens[2]];
-            int int_imm = labels[tokens[3]] - ic;
+            std::string rs1 = lookup_table[tokens[index + 1]];
+            std::string rs2 = lookup_table[tokens[index + 2]];
+            int int_imm = labels[tokens[index + 3]] - ic;
             std::bitset<12> bin_imm(int_imm);
             std::string imm = bin_imm.to_string();
             std::string imm2 = imm.substr(0, 7);
@@ -235,13 +250,13 @@ std::vector<int> Assembler::assemble(std::string file)
             int bin_instruction = bin_to_int(instruction);
             result.push_back(bin_instruction);
         }
-        else if (tokens[0] == "addi")
+        else if (tokens[index] == "addi")
         {
             std::string opcode = "0010011";
-            std::string rd = lookup_table[tokens[1]];
+            std::string rd = lookup_table[tokens[index + 1]];
             std::string func3 = "000";
-            std::string rs1 = lookup_table[tokens[2]];
-            int int_imm = std::stoi(tokens[3]);
+            std::string rs1 = lookup_table[tokens[index + 2]];
+            int int_imm = std::stoi(tokens[index + 3]);
             std::bitset<12> bin_imm(int_imm);
             std::string imm = bin_imm.to_string();
             std::string instruction = imm + rs1 + func3 + rd + opcode;
@@ -251,5 +266,7 @@ std::vector<int> Assembler::assemble(std::string file)
         ic++;
     }
     File.close();
-    return result;
+    result_pair.first = result;
+    result_pair.second = data;
+    return result_pair;
 }

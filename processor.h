@@ -17,10 +17,16 @@ public:
 Processor::Processor(std::string file1, std::string file2)
 {
     clock = 0;
-    int data1 = 84;
-    int data2 = 943;
-    std::vector<int> instructions1 = assembler.assemble(file1);
-    std::vector<int> instructions2 = assembler.assemble(file2);
+    int dataloc1 = 84;
+    int dataloc2 = 943;
+    std::pair<std::vector<int>, std::vector<int>> result1 = assembler.assemble(file1);
+    std::pair<std::vector<int>, std::vector<int>> result2 = assembler.assemble(file2);
+
+    std::vector<int> instructions1 = result1.first;
+    std::vector<int> instructions2 = result2.first;
+
+    std::vector<int> data1 = result1.second;
+    std::vector<int> data2 = result2.second;
 
     for (int index = 0; index < instructions1.size(); index++)
     {
