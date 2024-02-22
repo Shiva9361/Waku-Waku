@@ -335,6 +335,7 @@ std::pair<std::vector<int>, std::vector<int>> Assembler::assemble(std::string fi
             int bin_instruction = bin_to_int(instruction);
             result.push_back(bin_instruction);
         }
+        
         else if (tokens[index] == "addi")
         {
             std::string opcode = "0010011";

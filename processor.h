@@ -43,9 +43,9 @@ Processor::Processor(std::string file1, std::string file2)
     {
         memory[index] = instructions1.at(index);
     }
-    for (int index = 858; index - 858 < instructions2.size(); index++)
+    for (int index = 856; index - 856 < instructions2.size(); index++)
     {
-        memory[index] = instructions2.at(index - 858);
+        memory[index] = instructions2.at(index - 856);
     }
 
     memory[8] = 7;
@@ -57,7 +57,7 @@ Processor::Processor(std::string file1, std::string file2)
         cores[0].decode();
         cores[1].decode();
         i = cores[0].execute();
-        j = cores[1].execute() - 858;
+        j = cores[1].execute() - 856;
         cores[0].mem(memory);
         cores[1].mem(memory);
         clock++;
@@ -74,8 +74,15 @@ Processor::Processor(std::string file1, std::string file2)
     {
         cores[1].fetch(memory);
         cores[1].decode();
-        j = cores[1].execute() - 858;
+        j = cores[1].execute() - 856;
         cores[1].mem(memory);
         clock++;
     }
+    std::ofstream MemFile("memory.txt");
+
+  
+    for (int i=0;i<1024;i++){
+        MemFile << i<<","<<memory[i]<<std::endl;
+    }
+    MemFile.close();
 }
