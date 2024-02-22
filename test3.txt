@@ -1,6 +1,7 @@
 .data
-add: .word 1 2 3
+add: .word 1 2 3 4
+arr: .word 1 2 3
 .text
-lw x2 0(x3)
-lw x3 4(x3)
+la x2 add
+lw x3 12(x2)
 

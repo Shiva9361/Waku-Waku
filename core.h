@@ -36,6 +36,7 @@ private:
     int registers[32] = {0};
     int int_instruction;
     int pc;
+    int dataloc;
 
     std::string opcode;
     std::string rs1;
@@ -46,14 +47,14 @@ private:
     std::string func7;
 
 public:
-    Core(int pc);
+    Core(int pc,int dataloc);
     void fetch(int *memory);
     void decode();
     int execute();
     void mem(int *memory);
 };
 
-Core::Core(int pc)
+Core::Core(int pc,int dataloc)
 {
     registers[0] = 0; // x0 is hardwired to 0
     // registers[2] = 2147483632; // Stack pointer
@@ -62,6 +63,7 @@ Core::Core(int pc)
     registers[3] = 3;
     registers[17] = 8;
     this->pc = pc;
+    this->dataloc = dataloc;
 }
 void Core::fetch(int memory[])
 {
@@ -110,6 +112,10 @@ void Core::decode()
         rd = instruction.substr(20, 5);
         imm = instruction.substr(0, 12);
     }
+    else if (opcode == "0010111"){
+        rd = instruction.substr(20, 5);
+        imm = instruction.substr(0, 20);
+    }
 }
 
 int Core::execute()
@@ -144,11 +150,11 @@ int Core::execute()
         int int_imm = bin_to_int(imm);
         if (int_imm >= 0)
         {
-            pc = pc + (bin_to_int(imm) - 1);
+            pc = pc + (bin_to_int(imm) - 2);
         }
         else
         {
-            pc = pc + (bin_to_int(imm));
+            pc = pc + (bin_to_int(imm)) ;
         }
 
         std::cout << "Jumped to " << pc << std::endl;
@@ -162,7 +168,39 @@ int Core::execute()
                 int int_imm = bin_to_int(imm);
                 if (int_imm >= 0)
                 {
-                    pc = pc + (bin_to_int(imm) - 1);
+                    pc = pc + (bin_to_int(imm) - 2);
+                }
+                else
+                {
+                    pc = pc + (bin_to_int(imm));
+                }
+                std::cout << "Jumped to " << pc << std::endl;
+            }
+        }
+        else if (func3 == "000")
+        {
+            if (registers[std::stoi(rs1, nullptr, 2)] == registers[std::stoi(rs2, nullptr, 2)])
+            {
+                int int_imm = bin_to_int(imm);
+                if (int_imm >= 0)
+                {
+                    pc = pc + (bin_to_int(imm) - 2);
+                }
+                else
+                {
+                    pc = pc + (bin_to_int(imm));
+                }
+                std::cout << "Jumped to " << pc << std::endl;
+            }
+        }
+        else if (func3 == "100")
+        {
+            if (registers[std::stoi(rs1, nullptr, 2)] < registers[std::stoi(rs2, nullptr, 2)])
+            {
+                int int_imm = bin_to_int(imm);
+                if (int_imm >= 0)
+                {
+                    pc = pc + (bin_to_int(imm) - 2);
                 }
                 else
                 {
@@ -200,11 +238,13 @@ void Core::mem(int *memory)
     {
         if (func3 == "010")
         {
-            memory[registers[std::stoi(rs2, nullptr, 2)/4] + bin_to_int(imm)/4] = registers[std::stoi(rs1, nullptr, 2)];
+            memory[registers[std::stoi(rs2, nullptr, 2)]/4 + bin_to_int(imm)/4] = registers[std::stoi(rs1, nullptr, 2)];
         }
         std::cout << registers[std::stoi(rs2, nullptr, 2)/4] + bin_to_int(imm)/4<< std::endl;
     }
-            //
-    
+    else if (opcode == "0010111"){
+        registers[std::stoi(rd, nullptr, 2)] = (dataloc+bin_to_int(imm))*4;
+        std::cout<<(dataloc+bin_to_int(imm))<<std::endl;
+    }     //
     // std::cout << registers[std::stoi(rd, nullptr, 2)] << " " << std::stoi(rs1, nullptr, 2) << std::endl;
 }

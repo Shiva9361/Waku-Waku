@@ -6,7 +6,7 @@ class Processor
 {
 private:
     int memory[1024] = {0};
-    Core cores[2] = {Core(0), Core(856)}; // .text is of size 84 words
+    Core cores[2] = {Core(0,84), Core(856,943)}; // .text is of size 84 words
     int clock;
     Assembler assembler;
 
@@ -48,7 +48,6 @@ Processor::Processor(std::string file1, std::string file2)
         memory[index] = instructions2.at(index - 856);
     }
 
-    memory[8] = 7;
     int i = 0, j = 0;
     while (i < instructions1.size() && j < instructions2.size())
     {
