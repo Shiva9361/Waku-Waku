@@ -6,7 +6,7 @@ class Processor
 {
 private:
     int memory[1024] = {0};
-    Core cores[2] = {Core(0), Core(858)}; // .text is of size 84 words
+    Core cores[2] = {Core(0), Core(856)}; // .text is of size 84 words
     int clock;
     Assembler assembler;
 
@@ -27,6 +27,17 @@ Processor::Processor(std::string file1, std::string file2)
 
     std::vector<int> data1 = result1.second;
     std::vector<int> data2 = result2.second;
+
+    // Saving .data to memory
+    for (auto i : data1)
+    {
+        memory[dataloc1++] = i;
+    }
+
+    for (auto i : data2)
+    {
+        memory[dataloc2++] = i;
+    }
 
     for (int index = 0; index < instructions1.size(); index++)
     {

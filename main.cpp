@@ -2,6 +2,6 @@
 
 int main()
 {
-    Processor processsor("", "test2.txt");
+    Processor processsor("test3.txt", "");
     return 0;
 }

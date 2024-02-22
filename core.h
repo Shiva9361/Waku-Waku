@@ -60,7 +60,7 @@ Core::Core(int pc)
     registers[2] = 2;
     // registers[3] = 268435456;  // Global Pointer
     registers[3] = 3;
-    registers[17] = 0;
+    registers[17] = 8;
     this->pc = pc;
 }
 void Core::fetch(int memory[])
@@ -73,7 +73,7 @@ void Core::decode()
 {
     std::bitset<32> bin_instruction(int_instruction);
     std::string instruction = bin_instruction.to_string();
-    // std::cout << instruction << std::endl;
+    std::cout << instruction << std::endl;
 
     opcode = instruction.substr(25, 7);
     func3 = instruction.substr(17, 3);
@@ -135,8 +135,12 @@ int Core::execute()
     }
     else if (opcode == "1101111")
     {
+        std::cout << "Jumped from " << pc << std::endl;
         if (rd != "00000")
+        {
             registers[std::stoi(rd, nullptr, 2)] = pc;
+        }
+
         int int_imm = bin_to_int(imm);
         if (int_imm >= 0)
         {
@@ -164,7 +168,7 @@ int Core::execute()
                 {
                     pc = pc + bin_to_int(imm);
                 }
-                std::cout << "Jumped to " << pc << std::endl;
+                std::cout << "Jumped too " << pc << std::endl;
             }
         }
     }
@@ -196,6 +200,7 @@ void Core::mem(int *memory)
         {
             memory[registers[std::stoi(rs2, nullptr, 2)] + bin_to_int(imm)] = registers[std::stoi(rs1, nullptr, 2)];
         }
+        std::cout << registers[std::stoi(rs2, nullptr, 2)] << std::endl;
     }
-    // std::cout << registers[0] << std::endl;
+    // std::cout << registers[std::stoi(rd, nullptr, 2)] << " " << std::stoi(rs1, nullptr, 2) << std::endl;
 }
