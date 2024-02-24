@@ -2,6 +2,6 @@
 
 int main()
 {
-    Processor processsor("test3.txt", "");
+    Processor processsor("codes/bubble_sort.s", "codes/selection_sort.s");
     return 0;
 }

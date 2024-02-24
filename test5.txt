@@ -1,8 +1,0 @@
-add x2 x0 x1
-sub x3 x0 x1
-labelY:
-sub x0 x0 x2
-beq x0 x0 labelX
-add x0 x0 x0
-labelX:
-lw x0 0(x3)
