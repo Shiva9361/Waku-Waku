@@ -144,13 +144,11 @@ std::pair<std::vector<int>, std::vector<int>> Assembler::assemble(std::string fi
                 labels[tokens[0].substr(0, tokens[0].length() - 1)] = lc + 1;
             }
         }
+        else if(tokens[0] == "#" || tokens[0][0] == '#'){
+            continue;
+        }
         lc++;
     }
-    // for (auto i : labels)
-    // {
-    //     std::cout << i.first << i.second;
-    // }
-
     File.close();
 
     File.open(file);
@@ -168,10 +166,6 @@ std::pair<std::vector<int>, std::vector<int>> Assembler::assemble(std::string fi
         {
             tokens.push_back(token);
         }
-        if (tokens[0] == ".data")
-        {
-            std::cout << "hi";
-        }
         if (tokens.size() > 1)
         {
             if (tokens[1] == ".word")
@@ -185,14 +179,16 @@ std::pair<std::vector<int>, std::vector<int>> Assembler::assemble(std::string fi
                 
             }
         }
-
         else if (tokens[0] == ".text")
         {
-            //std::cout << "hi";
             break;
+        }
+        else if(tokens[0] == "#" || tokens[0][0] == '#'){
+            continue;
         }
     }
     File.close();
+
     File.open(file);
     int ic = 0;
     while (std::getline(File, line))
@@ -277,12 +273,9 @@ std::pair<std::vector<int>, std::vector<int>> Assembler::assemble(std::string fi
             {
                 std::string rs1 = lookup_table[sub_tokens[1].substr(0, (sub_tokens[1].length() - 2))];
             }
-
             std::bitset<12> bin_imm(std::stoi(sub_tokens[0], nullptr, 10));
             std::string imm = bin_imm.to_string();
-
             std::string instruction = imm + rs1 + func3 + rd + opcode;
-
             int bin_instruction = bin_to_int(instruction);
             result.push_back(bin_instruction);
         }
@@ -312,7 +305,6 @@ std::pair<std::vector<int>, std::vector<int>> Assembler::assemble(std::string fi
         }
         else if (tokens[index] == "jal")
         {
-            // std::cout << ic << " " << labels[tokens[2]] << std::endl;
             std::string opcode = "1101111";
             std::string rd = lookup_table[tokens[index + 1]];
             std::cout << ic << " IC" << std::endl;
@@ -369,6 +361,21 @@ std::pair<std::vector<int>, std::vector<int>> Assembler::assemble(std::string fi
             int bin_instruction = bin_to_int(instruction);
             result.push_back(bin_instruction);
         }
+        else if (tokens[index] == "bge")
+        {
+            std::string opcode = "1100011";
+            std::string func3 = "101";
+            std::string rs1 = lookup_table[tokens[index + 1]];
+            std::string rs2 = lookup_table[tokens[index + 2]];
+            int int_imm = labels[tokens[index + 3]] - ic;
+            std::bitset<12> bin_imm(int_imm);
+            std::string imm = bin_imm.to_string();
+            std::string imm2 = imm.substr(0, 7);
+            std::string imm1 = imm.substr(7, 5);
+            std::string instruction = imm2 + rs2 + rs1 + func3 + imm1 + opcode;
+            int bin_instruction = bin_to_int(instruction);
+            result.push_back(bin_instruction);
+        }
         else if (tokens[index] == "addi")
         {
             std::string opcode = "0010011";
@@ -392,8 +399,21 @@ std::pair<std::vector<int>, std::vector<int>> Assembler::assemble(std::string fi
             std::string instruction = imm + rd + opcode;
             int bin_instruction = bin_to_int(instruction);
             result.push_back(bin_instruction);
-            std::cout<<"LA"<<" ";
-            std::cout<<imm<<" "<< rd<<" "<<std::endl;
+        }
+        else if(tokens[index] == "j"){
+            std::string opcode = "1101111";
+            std::string rd = "00000";
+            std::cout << ic << " IC" << std::endl;
+            int int_imm = labels[tokens[index + 1]] - ic;
+            std::cout << int_imm << " imm" << std::endl;
+            std::bitset<20> bin_imm(int_imm);
+            std::string imm = bin_imm.to_string();
+            std::string instruction = imm + rd + opcode;
+            int bin_instruction = bin_to_int(instruction);
+            result.push_back(bin_instruction);
+        }
+        else if(tokens[index] == "#" || tokens[index][0] == '#'){
+            continue;
         }
         ic++;
     }

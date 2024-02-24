@@ -68,14 +68,13 @@ Core::Core(int pc,int dataloc)
 void Core::fetch(int memory[])
 {
     int_instruction = memory[pc];
-    // std::cout << int_instruction << std::endl;
     pc++;
 }
 void Core::decode()
 {
     std::bitset<32> bin_instruction(int_instruction);
     std::string instruction = bin_instruction.to_string();
-    std::cout << instruction << std::endl;
+    std::cout << "IF: " << instruction << std::endl;
 
     opcode = instruction.substr(25, 7);
     func3 = instruction.substr(17, 3);
@@ -124,30 +123,37 @@ int Core::execute()
     {
         if (func3 == "000" && func7 == "0000000")
         {
+            std::cout << "ID: " << "add" << std::endl;
             registers[std::stoi(rd, nullptr, 2)] = registers[std::stoi(rs1, nullptr, 2)] + registers[std::stoi(rs2, nullptr, 2)];
         }
         else if (func3 == "000" && func7 == "0100000")
         {
+            std::cout << "ID: " << "sub" << std::endl;
             registers[std::stoi(rd, nullptr, 2)] = registers[std::stoi(rs1, nullptr, 2)] - registers[std::stoi(rs2, nullptr, 2)];
         }
         else if (func3 == "000" && func7 == "0000001")
         {
+            std::cout << "ID: " << "mul" << std::endl;
             registers[std::stoi(rd, nullptr, 2)] = registers[std::stoi(rs1, nullptr, 2)] * registers[std::stoi(rs2, nullptr, 2)];
         }
         else if (func3 == "100" && func7 == "0000001")
         {
+            std::cout << "ID: " << "div" << std::endl;
             registers[std::stoi(rd, nullptr, 2)] = registers[std::stoi(rs1, nullptr, 2)] / registers[std::stoi(rs2, nullptr, 2)];
         }
+        std::cout << "RF: " << "x" << std::stoi(rs1, nullptr, 2) << ", " << "x" << std::stoi(rs2, nullptr, 2) << std::endl;
+        std::cout << "EXE: " << "executed" << std::endl;
+        std::cout << "MEM: " << "---" << std::endl;
+        std::cout << "WB: " << "x" << std::stoi(rd, nullptr, 2) << std::endl;
     }
     else if (opcode == "1101111")
     {
-        std::cout << "Jumped from " << pc << std::endl;
         if (rd != "00000")
         {
             registers[std::stoi(rd, nullptr, 2)] = pc;
         }
-
         int int_imm = bin_to_int(imm);
+        std::cout << "ID: " << "jal " << "imm: " << int_imm << std::endl;
         if (int_imm >= 0)
         {
             pc = pc + (bin_to_int(imm) - 2);
@@ -156,8 +162,10 @@ int Core::execute()
         {
             pc = pc + (bin_to_int(imm)) ;
         }
-
-        std::cout << "Jumped to " << pc << std::endl;
+        std::cout << "RF: ---" << std::endl; 
+        std::cout << "EXE: " << "executed & jumped to " << pc << std::endl;
+        std::cout << "MEM: " << "---" << std::endl;
+        std::cout << "WB: " << "x" << std::stoi(rd, nullptr, 2) << std::endl;
     }
     else if (opcode == "1100011")
     {
@@ -166,6 +174,7 @@ int Core::execute()
             if (registers[std::stoi(rs1, nullptr, 2)] != registers[std::stoi(rs2, nullptr, 2)])
             {
                 int int_imm = bin_to_int(imm);
+                std::cout << "ID: " << "bne " << "imm: " << int_imm << std::endl;
                 if (int_imm >= 0)
                 {
                     pc = pc + (bin_to_int(imm) - 2);
@@ -174,7 +183,7 @@ int Core::execute()
                 {
                     pc = pc + (bin_to_int(imm));
                 }
-                std::cout << "Jumped to " << pc << std::endl;
+                
             }
         }
         else if (func3 == "000")
@@ -182,6 +191,7 @@ int Core::execute()
             if (registers[std::stoi(rs1, nullptr, 2)] == registers[std::stoi(rs2, nullptr, 2)])
             {
                 int int_imm = bin_to_int(imm);
+                std::cout << "ID: " << "beq " << "imm: " << int_imm << std::endl;
                 if (int_imm >= 0)
                 {
                     pc = pc + (bin_to_int(imm) - 2);
@@ -190,7 +200,7 @@ int Core::execute()
                 {
                     pc = pc + (bin_to_int(imm));
                 }
-                std::cout << "Jumped to " << pc << std::endl;
+                
             }
         }
         else if (func3 == "100")
@@ -198,6 +208,7 @@ int Core::execute()
             if (registers[std::stoi(rs1, nullptr, 2)] < registers[std::stoi(rs2, nullptr, 2)])
             {
                 int int_imm = bin_to_int(imm);
+                std::cout << "ID: " << "blt " << "imm: " << int_imm << std::endl;
                 if (int_imm >= 0)
                 {
                     pc = pc + (bin_to_int(imm) - 2);
@@ -206,19 +217,45 @@ int Core::execute()
                 {
                     pc = pc + (bin_to_int(imm));
                 }
-                std::cout << "Jumped to " << pc << std::endl;
+                
             }
         }
+        else if (func3 == "101")
+        {
+            if (registers[std::stoi(rs1, nullptr, 2)] >= registers[std::stoi(rs2, nullptr, 2)])
+            {
+                int int_imm = bin_to_int(imm);
+                std::cout << "ID: " << "bge " << "imm: " << int_imm << std::endl;
+                if (int_imm >= 0)
+                {
+                    pc = pc + (bin_to_int(imm) - 2);
+                }
+                else
+                {
+                    pc = pc + (bin_to_int(imm));
+                }
+                
+            }
+        }
+        std::cout << "RF: " << "x" << std::stoi(rs1, nullptr, 2) << ", " << "x" << std::stoi(rs2, nullptr, 2) << std::endl;
+        std::cout << "EXE: " << "executed & jumped to " << pc << std::endl;
+        std::cout << "MEM: " << "---" << std::endl;
+        std::cout << "WB: " "---" << std::endl;
     }
     else if (opcode == "0010011")
     {
         if (func3 == "000")
         {
+            std::cout << "ID: " << "addi " << "imm: " << bin_to_int(imm) << std::endl;
             if (rd != "00000")
             {
                 registers[std::stoi(rd, nullptr, 2)] = registers[std::stoi(rs1, nullptr, 2)] + bin_to_int(imm);
             }
         }
+        std::cout << "RF: " << "x" << std::stoi(rs1, nullptr, 2) << std::endl;
+        std::cout << "EXE: " << "executed" << std::endl;
+        std::cout << "MEM: " << "---" << std::endl;
+        std::cout << "WB: " << "x" << std::stoi(rd, nullptr, 2) << std::endl;
     }
     return pc;
 }
@@ -228,23 +265,35 @@ void Core::mem(int *memory)
     {
         if (func3 == "010")
         {
-            if (rd != "00000")
+            std::cout << "ID: " << "lw " << "imm: " << bin_to_int(imm) << std::endl;
+            if (rd != "00000"){
                 registers[std::stoi(rd, nullptr, 2)] = memory[registers[std::stoi(rs1, nullptr, 2)]/4 + bin_to_int(imm)/4];
+            }
         }
-        std::cout << registers[std::stoi(rs1, nullptr, 2)]/4 + bin_to_int(imm)/4<< std::endl;
-        std::cout << registers[std::stoi(rd, nullptr, 2)]<<std::endl;
+        std::cout << "RF: " << "x" << std::stoi(rs1, nullptr, 2) << std::endl;
+        std::cout << "EXE: " << "executed" << std::endl;
+        std::cout << "MEM: " << "loaded from index " << registers[std::stoi(rs1, nullptr, 2)]/4 + bin_to_int(imm)/4 << std::endl;
+        std::cout << "WB: " << "x" << std::stoi(rd, nullptr, 2) << std::endl;
     }
     else if (opcode == "0100011")
     {
         if (func3 == "010")
         {
+            std::cout << "ID: " << "sw " << "imm: " << bin_to_int(imm) << std::endl;
             memory[registers[std::stoi(rs2, nullptr, 2)]/4 + bin_to_int(imm)/4] = registers[std::stoi(rs1, nullptr, 2)];
+            std::cout << "RF: " << "x" << std::stoi(rs1, nullptr, 2) << ", " << "x" << std::stoi(rs2, nullptr, 2) << std::endl;
+            std::cout << "EXE: " << "executed" << std::endl;
+            std::cout << "MEM: " << "stored at index " << registers[std::stoi(rs2, nullptr, 2)]/4 + bin_to_int(imm)/4 << std::endl;
+            std::cout << "WB: " "---" << std::endl;
         }
-        std::cout << registers[std::stoi(rs2, nullptr, 2)/4] + bin_to_int(imm)/4<< std::endl;
     }
     else if (opcode == "0010111"){
+        std::cout << "ID: " << "la " << "imm: " << bin_to_int(imm) << std::endl;
+        std::cout << "RF: " << "---" << std::endl;
+        std::cout << "EXE: " << "---" << std::endl;
         registers[std::stoi(rd, nullptr, 2)] = (dataloc+bin_to_int(imm))*4;
-        std::cout<<(dataloc+bin_to_int(imm))<<std::endl;
-    }     //
-    // std::cout << registers[std::stoi(rd, nullptr, 2)] << " " << std::stoi(rs1, nullptr, 2) << std::endl;
+        std::cout << "MEM: " << "loaded address from index " << dataloc+bin_to_int(imm) << std::endl;
+        std::cout << "WB: " << "x" << std::stoi(rd, nullptr, 2) << std::endl;
+    }
+    std::cout << std::endl;
 }

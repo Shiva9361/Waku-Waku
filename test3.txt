@@ -4,4 +4,4 @@ arr: .word 1 2 3
 .text
 la x2 add
 lw x3 12(x2)
-
+sw x5 8(x2)
