@@ -1,5 +1,23 @@
 # Waku-Waku
 
+## 25/02/2024
+
+## 24/02/2024 10 pm
+
+We added 'j' and print statements for a cleaner output.
+same shit regarding selection sort.
+
+## 23/02/2024 5 pm
+
+Bubble sort was working!!!
+Fed up while trying to write assembly code for selection sort.
+
+## 22/02/2024 7pm
+
+Sasaank was in the 'Convocation Committee'. so he was not available.
+Shiva changed the way memory is accessed.
+Later that day, we added '.data' segment.
+
 ## 17/02/2024 1 am
 
 We decided to partition the memory for each core based on RISC-V ISA.
@@ -11,7 +29,7 @@ Took an eternity to figure out wth is happening.
 The culprit turns out to be 'std::stoi()'(lol).
 It is converting the binary string to its unsigned value.
 So had to create our own function to convert a binary string to its 2's complement value.
-Now the processor also supports 'lw', 'sw', 'jal', 'bne'.
+Now the processor also supports labels, 'lw', 'sw', 'jal', 'bne'.
 
 ## 16/02/2024 5:30 pm
 
