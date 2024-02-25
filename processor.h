@@ -47,7 +47,15 @@ Processor::Processor(std::string file1, std::string file2)
     {
         memory[index] = instructions2.at(index - 856);
     }
+    
+    std::ofstream MembFile("memory_before.txt");
 
+  
+    for (int i=0;i<1024;i++){
+        MembFile << i<<","<<memory[i]<<std::endl;
+    }
+    MembFile.close();
+    
     int i = 0, j = 0;
     while (i < instructions1.size() && j < instructions2.size())
     {
@@ -59,6 +67,8 @@ Processor::Processor(std::string file1, std::string file2)
         j = cores[1].execute() - 856;
         cores[0].mem(memory);
         cores[1].mem(memory);
+        cores[0].printreg(0);
+        cores[1].printreg(1);
         clock++;
     }
     while (i < instructions1.size())
@@ -67,6 +77,8 @@ Processor::Processor(std::string file1, std::string file2)
         cores[0].decode();
         i = cores[0].execute();
         cores[0].mem(memory);
+        cores[0].printreg(0);
+        cores[1].printreg(1);
         clock++;
     }
     while (j < instructions2.size())
@@ -75,9 +87,11 @@ Processor::Processor(std::string file1, std::string file2)
         cores[1].decode();
         j = cores[1].execute() - 856;
         cores[1].mem(memory);
+        cores[0].printreg(0);
+        cores[1].printreg(1);
         clock++;
     }
-    std::ofstream MemFile("memory.txt");
+    std::ofstream MemFile("memory_after.txt");
 
   
     for (int i=0;i<1024;i++){

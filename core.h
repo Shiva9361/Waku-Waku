@@ -49,6 +49,7 @@ private:
 
 public:
     Core(int pc,int dataloc);
+    void printreg(int core);
     void fetch(int *memory);
     void decode();
     int execute();
@@ -259,4 +260,16 @@ void Core::mem(int *memory)
         std::cout << "WB: " << "x" << std::stoi(rd, nullptr, 2) << std::endl;
     }
     std::cout << std::endl;
+}
+
+void Core::printreg(int core){
+    
+    std::cout<<"Core "<<core<<" Register Content"<<std::endl;
+    for (int i = 0; i<32;i++){
+        if (i%8== 0 && i!=0) std::cout<<std::endl;
+        std::cout<< "x"<<i<<" "<<registers[i]<<"\t";
+        
+    }
+    std::cout<<std::endl;
+    std::cout<<std::endl;
 }

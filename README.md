@@ -1,6 +1,11 @@
 # Waku-Waku
 
-## 25/02/2024
+## 25/02/2024 6:30 pm
+
+Finally did some fixing, Now selection sort works.. Hurray!!. As the gui is still under development,
+decided to print everything for now. After taking the size of memory and our sanity into consideration,
+decided to write the memory before and after execution to a file to show the changes.
+The code for both the sorts has been added into codes folder.
 
 ## 24/02/2024 10 pm
 
@@ -34,7 +39,7 @@ Now the processor also supports labels, 'lw', 'sw', 'jal', 'bne'.
 ## 16/02/2024 5:30 pm
 
 We decided to make an assembler which reads a text file having assembly code.
-We encode each line/instruction of the code into binary format based on RISC-V ISA. 
+We encode each line/instruction of the code into binary format based on RISC-V ISA.
 We then convert the binary string to an integer and store it in the memory.
 The core then fetches this instruction, converts it back into binary string, decodes the instruction and executes it.
 The processor at this point supports 'add', 'sub', 'mul', 'div'.
