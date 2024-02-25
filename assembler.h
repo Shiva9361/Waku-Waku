@@ -141,8 +141,13 @@ std::pair<std::vector<int>, std::vector<int>> Assembler::assemble(std::string fi
             }
             else
             {
-                labels[tokens[0].substr(0, tokens[0].length() - 1)] = lc + 1;
+                labels[tokens[0].substr(0, tokens[0].length() - 1)] = lc;
+                continue;
             }
+        }
+        else if (tokens[0] == ".text")
+        {
+            lc = 0; continue;
         }
         else if(tokens[0] == "#" || tokens[0][0] == '#'){
             continue;
@@ -307,13 +312,11 @@ std::pair<std::vector<int>, std::vector<int>> Assembler::assemble(std::string fi
         {
             std::string opcode = "1101111";
             std::string rd = lookup_table[tokens[index + 1]];
-            std::cout << ic << " IC" << std::endl;
-            int int_imm = labels[tokens[index + 2]] - ic;
-            std::cout << int_imm << " imm" << std::endl;
+            int int_imm = labels[tokens[index + 2]];
             std::bitset<20> bin_imm(int_imm);
             std::string imm = bin_imm.to_string();
             std::string instruction = imm + rd + opcode;
-            int bin_instruction = bin_to_int(instruction);
+            int bin_instruction = std::stoi(instruction, nullptr, 2);
             result.push_back(bin_instruction);
         }
         else if (tokens[index] == "bne")
@@ -322,13 +325,13 @@ std::pair<std::vector<int>, std::vector<int>> Assembler::assemble(std::string fi
             std::string func3 = "001";
             std::string rs1 = lookup_table[tokens[index + 1]];
             std::string rs2 = lookup_table[tokens[index + 2]];
-            int int_imm = labels[tokens[index + 3]] - ic;
+            int int_imm = labels[tokens[index + 3]];
             std::bitset<12> bin_imm(int_imm);
             std::string imm = bin_imm.to_string();
             std::string imm2 = imm.substr(0, 7);
             std::string imm1 = imm.substr(7, 5);
             std::string instruction = imm2 + rs2 + rs1 + func3 + imm1 + opcode;
-            int bin_instruction = bin_to_int(instruction);
+            int bin_instruction = std::stoi(instruction, nullptr, 2);
             result.push_back(bin_instruction);
         }
         else if (tokens[index] == "beq")
@@ -337,13 +340,13 @@ std::pair<std::vector<int>, std::vector<int>> Assembler::assemble(std::string fi
             std::string func3 = "000";
             std::string rs1 = lookup_table[tokens[index + 1]];
             std::string rs2 = lookup_table[tokens[index + 2]];
-            int int_imm = labels[tokens[index + 3]] - ic;
-            std::bitset<12> bin_imm(int_imm);
+            int int_imm = labels[tokens[index + 3]];
+            std::bitset<12> bin_imm(int_imm); 
             std::string imm = bin_imm.to_string();
             std::string imm2 = imm.substr(0, 7);
             std::string imm1 = imm.substr(7, 5);
             std::string instruction = imm2 + rs2 + rs1 + func3 + imm1 + opcode;
-            int bin_instruction = bin_to_int(instruction);
+            int bin_instruction = std::stoi(instruction, nullptr, 2);
             result.push_back(bin_instruction);
         }
         else if (tokens[index] == "blt")
@@ -352,13 +355,13 @@ std::pair<std::vector<int>, std::vector<int>> Assembler::assemble(std::string fi
             std::string func3 = "100";
             std::string rs1 = lookup_table[tokens[index + 1]];
             std::string rs2 = lookup_table[tokens[index + 2]];
-            int int_imm = labels[tokens[index + 3]] - ic;
+            int int_imm = labels[tokens[index + 3]];
             std::bitset<12> bin_imm(int_imm);
             std::string imm = bin_imm.to_string();
             std::string imm2 = imm.substr(0, 7);
             std::string imm1 = imm.substr(7, 5);
             std::string instruction = imm2 + rs2 + rs1 + func3 + imm1 + opcode;
-            int bin_instruction = bin_to_int(instruction);
+            int bin_instruction = std::stoi(instruction, nullptr, 2);
             result.push_back(bin_instruction);
         }
         else if (tokens[index] == "bge")
@@ -367,13 +370,13 @@ std::pair<std::vector<int>, std::vector<int>> Assembler::assemble(std::string fi
             std::string func3 = "101";
             std::string rs1 = lookup_table[tokens[index + 1]];
             std::string rs2 = lookup_table[tokens[index + 2]];
-            int int_imm = labels[tokens[index + 3]] - ic;
+            int int_imm = labels[tokens[index + 3]];
             std::bitset<12> bin_imm(int_imm);
             std::string imm = bin_imm.to_string();
             std::string imm2 = imm.substr(0, 7);
             std::string imm1 = imm.substr(7, 5);
             std::string instruction = imm2 + rs2 + rs1 + func3 + imm1 + opcode;
-            int bin_instruction = bin_to_int(instruction);
+            int bin_instruction = std::stoi(instruction, nullptr, 2);
             result.push_back(bin_instruction);
         }
         else if (tokens[index] == "addi")
@@ -403,13 +406,11 @@ std::pair<std::vector<int>, std::vector<int>> Assembler::assemble(std::string fi
         else if(tokens[index] == "j"){
             std::string opcode = "1101111";
             std::string rd = "00000";
-            std::cout << ic << " IC" << std::endl;
-            int int_imm = labels[tokens[index + 1]] - ic;
-            std::cout << int_imm << " imm" << std::endl;
+            int int_imm = labels[tokens[index + 1]];
             std::bitset<20> bin_imm(int_imm);
             std::string imm = bin_imm.to_string();
             std::string instruction = imm + rd + opcode;
-            int bin_instruction = bin_to_int(instruction);
+            int bin_instruction = std::stoi(instruction, nullptr, 2);
             result.push_back(bin_instruction);
         }
         else if(tokens[index] == "#" || tokens[index][0] == '#'){

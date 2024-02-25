@@ -37,6 +37,7 @@ private:
     int int_instruction;
     int pc;
     int dataloc;
+    int pc_i;
 
     std::string opcode;
     std::string rs1;
@@ -63,6 +64,7 @@ Core::Core(int pc,int dataloc)
     registers[3] = 3;
     registers[17] = 8;
     this->pc = pc;
+    this->pc_i = pc;
     this->dataloc = dataloc;
 }
 void Core::fetch(int memory[])
@@ -152,16 +154,9 @@ int Core::execute()
         {
             registers[std::stoi(rd, nullptr, 2)] = pc;
         }
-        int int_imm = bin_to_int(imm);
-        std::cout << "ID: " << "jal " << "imm: " << int_imm << std::endl;
-        if (int_imm >= 0)
-        {
-            pc = pc + (bin_to_int(imm) - 2);
-        }
-        else
-        {
-            pc = pc + (bin_to_int(imm)) ;
-        }
+        int int_imm = std::stoi(imm, nullptr, 2);
+        std::cout << "ID: " << "jal " << "pc: " << int_imm + pc_i << std::endl;
+        pc = int_imm + pc_i;
         std::cout << "RF: ---" << std::endl; 
         std::cout << "EXE: " << "executed & jumped to " << pc << std::endl;
         std::cout << "MEM: " << "---" << std::endl;
@@ -173,68 +168,36 @@ int Core::execute()
         {
             if (registers[std::stoi(rs1, nullptr, 2)] != registers[std::stoi(rs2, nullptr, 2)])
             {
-                int int_imm = bin_to_int(imm);
-                std::cout << "ID: " << "bne " << "imm: " << int_imm << std::endl;
-                if (int_imm >= 0)
-                {
-                    pc = pc + (bin_to_int(imm) - 2);
-                }
-                else
-                {
-                    pc = pc + (bin_to_int(imm));
-                }
-                
+                int int_imm = std::stoi(imm, nullptr, 2);
+                std::cout << "ID: " << "bne " << "pc: " << int_imm + pc_i << std::endl;
+                pc = int_imm + pc_i;
             }
         }
         else if (func3 == "000")
         {
             if (registers[std::stoi(rs1, nullptr, 2)] == registers[std::stoi(rs2, nullptr, 2)])
             {
-                int int_imm = bin_to_int(imm);
-                std::cout << "ID: " << "beq " << "imm: " << int_imm << std::endl;
-                if (int_imm >= 0)
-                {
-                    pc = pc + (bin_to_int(imm) - 2);
-                }
-                else
-                {
-                    pc = pc + (bin_to_int(imm));
-                }
-                
+                int int_imm = std::stoi(imm, nullptr, 2);
+                std::cout << "ID: " << "beq " << "pc: " << int_imm + pc_i << std::endl;
+                pc = int_imm + pc_i;
             }
         }
         else if (func3 == "100")
         {
             if (registers[std::stoi(rs1, nullptr, 2)] < registers[std::stoi(rs2, nullptr, 2)])
             {
-                int int_imm = bin_to_int(imm);
-                std::cout << "ID: " << "blt " << "imm: " << int_imm << std::endl;
-                if (int_imm >= 0)
-                {
-                    pc = pc + (bin_to_int(imm) - 2);
-                }
-                else
-                {
-                    pc = pc + (bin_to_int(imm));
-                }
-                
+                int int_imm = std::stoi(imm, nullptr, 2);
+                std::cout << "ID: " << "blt " << "pc: " << int_imm + pc_i << std::endl;
+                pc = int_imm + pc_i;
             }
         }
         else if (func3 == "101")
         {
             if (registers[std::stoi(rs1, nullptr, 2)] >= registers[std::stoi(rs2, nullptr, 2)])
             {
-                int int_imm = bin_to_int(imm);
-                std::cout << "ID: " << "bge " << "imm: " << int_imm << std::endl;
-                if (int_imm >= 0)
-                {
-                    pc = pc + (bin_to_int(imm) - 2);
-                }
-                else
-                {
-                    pc = pc + (bin_to_int(imm));
-                }
-                
+                int int_imm = std::stoi(imm, nullptr, 2);
+                std::cout << "ID: " << "bge " << "pc: " << int_imm + pc_i << std::endl;
+                pc = int_imm + pc_i;
             }
         }
         std::cout << "RF: " << "x" << std::stoi(rs1, nullptr, 2) << ", " << "x" << std::stoi(rs2, nullptr, 2) << std::endl;
