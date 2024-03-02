@@ -3,12 +3,12 @@
 #include "state.h"
 class HazardDetector{
     public:
-        void harzard_without_forwarding(std::vector<State> states,int &hazard_count);
-        void hazard_with_forwarding(std::vector<State> &states, int &hazard_count);
+        void hazard_without_forwarding(std::vector<State> states,int &hazard_count);
+        void hazard_with_forwarding(std::vector<State> &states, int &hazard_count, bool &if_stall, int &stall_pos);
 
 };
 
-void HazardDetector::harzard_without_forwarding(std::vector<State> states,int &hazard_count){
+void HazardDetector::hazard_without_forwarding(std::vector<State> states,int &hazard_count){
     // states of 2,3 we have to check
     /*  0 wb
         1 mem
@@ -91,12 +91,48 @@ void HazardDetector::harzard_without_forwarding(std::vector<State> states,int &h
     
 }
 
-void HazardDetector::hazard_with_forwarding(std::vector<State> &states,int &hazard_count){
+void HazardDetector::hazard_with_forwarding(std::vector<State> &states,int &hazard_count, bool &if_stall, int &stall_pos){
     
-    if (states[3].is_dummy) return;
-    states[3].opcode = states[3].instruction.substr(25, 7);
-    if (states[3].opcode == "0110011" || states[3].opcode == "0100011"){
-        states[3].rs1 = std::stoi(states[3].instruction.substr(12, 5),nullptr,2);
-        states[3].rs2 = std::stoi(states[3].instruction.substr(7, 5),nullptr,2);
-}
+    // if (states[3].is_dummy) return;
+    // states[3].opcode = states[3].instruction.substr(25, 7);
+    // if (states[3].opcode == "0110011" || states[3].opcode == "0100011"){
+    //     states[3].rs1 = std::stoi(states[3].instruction.substr(12, 5),nullptr,2);
+    //     states[3].rs2 = std::stoi(states[3].instruction.substr(7, 5),nullptr,2);
+    // } 
+
+    // E -> E forwarding
+    if(!states[1].is_dummy && states[1].rd != 0){
+        if(states[1].opcode == "0000011"){ // load
+            if(states[2].opcode == "0100011"){ // store
+
+            }else{
+                if((states[2].rs1 == states[1].rd || states[2].rs2 == states[1].rd) && !states[2].is_dummy){
+                    hazard_count++;
+                    if_stall = true;
+                    stall_pos = 0;
+                }
+            }
+        }
+        else{
+            if(states[2].rs1 == states[1].rd && !states[2].is_dummy){
+                states[2].operand1 = states[1].temp_reg;
+                hazard_count++;
+            }
+            if(states[2].rs2 == states[1].rd && !states[2].is_dummy){ // need to add store case
+                states[2].operand2 = states[1].temp_reg;
+                hazard_count++;
+            }
+        }
+    }
+    // M -> E forwarding
+    if(!states[0].is_dummy && states[0].rd != 0){
+        if(states[0].rd == states[2].rs1 && !states[2].is_dummy){
+            states[2].operand1 = states[0].temp_reg;
+            hazard_count++;
+        }
+        if(states[0].rs2 == states[1].rd && !states[2].is_dummy){ // need to add store case
+            states[2].operand2 = states[0].temp_reg;
+            hazard_count++;
+        }
+    }
 }

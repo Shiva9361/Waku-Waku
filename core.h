@@ -65,7 +65,7 @@ Core::Core(int pc,int dataloc)
 {
     registers[0] = 0; // x0 is hardwired to 0
     // registers[2] = 2147483632; // Stack pointer
-    // registers[1] = 111;
+    registers[1] = 111;
     // registers[5] = 84*4;
     // // registers[3] = 268435456;  // Global Pointer
     // registers[3] = 3;
@@ -334,12 +334,26 @@ void Core::execute(State &state){
     if (state.is_dummy) return;
     if (state.opcode == "0110011")
     {
+        
         if (state.func3 == "000" && state.func7 == "0000000")
         {
             #ifdef PRINT
             std::cout << "ID: " << "add" << std::endl;
             #endif
-            state.temp_reg = registers[state.rs1] + registers[state.rs2];
+            if (state.operand1 !=-1 && state.operand2!=-1){
+                state.temp_reg = state.operand1 + state.operand2;
+            }
+            else if (state.operand1 !=-1){
+                state.temp_reg = state.operand1 + registers[state.rs2];
+            }
+            else if (state.operand2 !=-1){
+                state.temp_reg = registers[state.rs1] + state.operand2;
+            }
+            else {
+                state.temp_reg = registers[state.rs1] + registers[state.rs2];
+            }
+            
+            std::cout << state.temp_reg << " reg"<<std::endl;
         }
         else if (state.func3 == "000" && state.func7 == "0100000")
         {   

@@ -1,4 +1,5 @@
 #include <string>
+#include <climits>
 class State{
     public:
         int pc;
@@ -7,6 +8,8 @@ class State{
         std::string instruction;
         int rs1;
         int rs2;
+        int operand1;
+        int operand2;
         int temp_reg;
         bool write;
         int rd;
@@ -25,6 +28,8 @@ State::State(int pc){
     rs1 = -1;
     rs2 = -1;
     rd = -1; 
+    operand1 = -1;
+    operand2 = -1;
     write = false;   
     next_pc = -1;
 }

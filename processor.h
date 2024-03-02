@@ -11,7 +11,7 @@ private:
     bool pipeline;
     bool all_dummy;
     int instruction_count;
-    int hazard_count;
+    int hazard_count_f;
     Assembler assembler;
     HazardDetector hazardDetector;
 
@@ -32,7 +32,7 @@ void Processor::evaluate(std::vector<State> &pipelined_instructions,int core){
 Processor::Processor(std::string file1, std::string file2,bool pipeline,bool forwarding)
 {
     clock = 0;
-    hazard_count = 0;
+    hazard_count_f = 0;
     instruction_count = 0;
     int dataloc1 = 84;
     int dataloc2 = 943;
@@ -114,7 +114,6 @@ Processor::Processor(std::string file1, std::string file2,bool pipeline,bool for
     */
     else{
         if(!forwarding){
-            int pc1_loc =0;
             std::vector<State> states = {State(0),State(0),State(0),State(0),State(0)};
             
             for (int i=0;i<4;i++){
@@ -129,14 +128,14 @@ Processor::Processor(std::string file1, std::string file2,bool pipeline,bool for
                 std::cout<<std::endl;
 
                 int hazard_count =0;
-                hazardDetector.harzard_without_forwarding(states,hazard_count);
+                hazardDetector.hazard_without_forwarding(states,hazard_count);
 
                 std::vector<State> oldStates = states;
     
                 evaluate(states,0);
 
                 if (hazard_count>0){
-                    this->hazard_count += hazard_count;
+                    hazard_count_f += hazard_count;
                     states = {states[0],states[1],State(0),oldStates[3],oldStates[4]};
                     states[4].pc = states[3].next_pc;
                     std::cout<<states[4].pc<<std::endl;
@@ -174,6 +173,67 @@ Processor::Processor(std::string file1, std::string file2,bool pipeline,bool for
 
             }
         }
+        else{
+            std::vector<State> states = {State(0),State(0),State(0),State(0),State(0)};
+
+            for (int i=0;i<4;i++){
+                states[i].is_dummy = true;
+            }
+            while(!all_dummy){
+                for (auto i:states){
+                    if (i.is_dummy) std::cout<<"stall ";
+                    else std::cout<<i.instruction<<" ";
+                }
+                std::cout<<std::endl;
+
+                int hazard_count =0; bool if_stall = false; int stall_pos = 0;
+                hazardDetector.hazard_with_forwarding(states,hazard_count,if_stall,stall_pos);
+
+                std::vector<State> oldStates = states;
+    
+                evaluate(states,0);
+
+                if (hazard_count>0){
+                    hazard_count_f += hazard_count;
+                    states.push_back(State(states[3].next_pc));
+                    if (memory[states[3].next_pc] == 0){
+                        states[4].is_dummy = true;
+                    }
+                    states = {states[0],State(0),oldStates[2],oldStates[3],oldStates[4]};
+                    states[4].pc = states[3].next_pc;
+                    states[1].is_dummy = true;
+                }
+                else {
+                    if (states[1].opcode == "1101111" || states[1].opcode == "1100011"){
+                        // Flush
+                        states[2].is_dummy = true;
+                        states[3].is_dummy = true;
+                        states.push_back(State(states[1].next_pc));
+                    }
+                    else if (states[3].is_dummy){
+                        states.push_back(State(0));
+                        states[4].is_dummy = true;
+                    }
+                    else {
+                        states.push_back(State(states[3].next_pc));
+                        if (memory[states[3].next_pc] == 0){
+                            states[4].is_dummy = true;
+                        }
+                    }
+                    /*
+                        Exit condition
+                    */
+                    all_dummy = true;
+                    for (auto i:states){
+                        if(!i.is_dummy){
+                            all_dummy = false;
+                        }
+                    }
+                   
+                }
+                cores[0].savereg(0);
+            }
+        }
     }
     std::cout<<instruction_count<<std::endl;
     std::ofstream MemFile("memory_after.txt");
@@ -184,3 +244,4 @@ Processor::Processor(std::string file1, std::string file2,bool pipeline,bool for
     }
     MemFile.close();
 }
+
