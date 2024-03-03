@@ -1,6 +1,7 @@
 #include <bitset>
 #include <iostream>
 #include "hazardDetector.h"
+#include "BTB.h"
 #include <bits/stdc++.h>
 #include <string>
 
@@ -46,6 +47,7 @@ private:
     std::string func3;
     std::string func7;
 
+    BTB btb;
 public:
     int pc;
     Core(int pc,int dataloc);
@@ -89,6 +91,9 @@ void Core::fetch(int memory[],State &state)
     std::string instruction_string = bin_instruction.to_string();
  
     state.instruction = instruction_string;
+    // if(btb.find(pc) && btb.size() != 0){
+    //     state.branch_taken = btb.predict(pc);
+    // }
     state.next_pc = state.pc+1; // no prediction for now
 }
 

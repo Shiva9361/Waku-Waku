@@ -20,6 +20,7 @@ class State{
         std::string func3;
         std::string func7;
         bool is_dummy;
+        bool branch_taken;
         State(int pc);
 
 };
@@ -36,4 +37,5 @@ State::State(int pc){
     operand2 = 0;
     write = false;   
     next_pc = -1;
+    branch_taken = false;
 }
