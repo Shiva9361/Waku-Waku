@@ -13,6 +13,9 @@ memory_dict = {}
 core1_reg_states = []
 core0_reg_states = []
 
+core1_pipeline_states = []
+core0_pipeline_states = []
+
 @app.route('/memory')
 def memory():
     global memory_dict
@@ -20,16 +23,23 @@ def memory():
 
 @app.route('/run',methods = ["POST"])
 def run():
-    global memory_dict,core1_reg_states,core0_reg_states
+    global memory_dict,core1_reg_states,core0_reg_states,core1_pipeline_states,core0_pipeline_states
     core1_reg_states = []
     core0_reg_states = []
+    core1_pipeline_states = []
+    core0_pipeline_states = []
+
     if request.method == "POST":
         if not os.path.exists("a.out"):
             os.system("g++ main.cpp")
-        if os.path.exists("core1.txt"):
-            os.remove("core1.txt")
-        if os.path.exists("core0.txt"):
-            os.remove("core0.txt")
+        if os.path.exists("data/core1_reg.txt"):
+            os.remove("data/core1_reg.txt")
+        if os.path.exists("data/core0_reg.txt"):
+            os.remove("data/core0_reg.txt")
+        if os.path.exists("data/core1_pipe.txt"):
+            os.remove("data/core1_pipe.txt")
+        if os.path.exists("data/core0_pipe.txt"):
+            os.remove("data/core0_pipe.txt")
         
         instruction = []
         if request.form["pipeline"]:
@@ -51,7 +61,7 @@ def run():
             for i in memory[:-1]:
                 memory_dict[int(i.split(",")[0])] = int(i.split(",")[1])
 
-        with open("core1.txt") as core_reg_file:
+        with open("data/core1_reg.txt") as core_reg_file:
             reg_states= core_reg_file.read()
             reg_states.replace("\r\n","\n")
             reg_states = reg_states.split("\n")
@@ -64,7 +74,7 @@ def run():
                         reg_dict[reg] = value
 
                 core1_reg_states.append(reg_dict)
-        with open("core0.txt") as core_reg_file:
+        with open("data/core0_reg.txt") as core_reg_file:
             reg_states= core_reg_file.read()
             reg_states.replace("\r\n","\n")
             reg_states = reg_states.split("\n")
@@ -77,6 +87,33 @@ def run():
                         reg_dict[reg] = value
 
                 core0_reg_states.append(reg_dict)
+        
+        if request.form["pipeline"]:
+            with open("data/core1_pipe.txt") as core_pipe_file:
+                states = core_pipe_file.read().replace("\r\n","\n").split("\n")
+                template_state = ["write_back","memory","execute","decode/register_fetch","instruction_fetch"]
+                for state in states:
+                    state_list = state.split(" ")[:-1]  
+                    for _ in range(len(state_list)):
+                        if state_list[_] == "0":
+                            state_list[_] = "stall"
+                        else:
+                            state_list[_] = template_state[_]
+                    core1_pipeline_states.append(state_list)
+            
+            with open("data/core0_pipe.txt") as core_pipe_file:
+                states = core_pipe_file.read().replace("\r\n","\n").split("\n")
+                template_state = ["write_back","memory","execute","decode/register_fetch","instruction_fetch"]
+                for state in states:
+                    state_list = state.split(" ")[:-1]
+                    for _ in range(len(state_list)):
+                        if state_list[_] == "0":
+                            state_list[_] = "stall"
+                        else:
+                            state_list[_] = template_state[_]
+                    core0_pipeline_states.append(state_list)
+
+
 
     return {"message":"Done"}
 
@@ -91,6 +128,15 @@ def core0_reg():
 @app.route('/core/1/reg')
 def core1_reg():
     return jsonify(core1_reg_states)
+
+@app.route('/core/0/pipe')
+def core0_pipe():
+    return jsonify(core0_pipeline_states)
+
+@app.route('/core/1/pipe')
+def core1_pipe():
+    return jsonify(core1_pipeline_states)
+
 if __name__ == "__main__":
     app.run(debug=True)
     

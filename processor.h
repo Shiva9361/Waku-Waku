@@ -23,15 +23,15 @@ public:
 
 void Processor::evaluate(std::vector<State> &pipelined_instructions,int core){
     cores[core].writeback(pipelined_instructions[0],instruction_count);
-    std::cout<<"did wb"<<std::endl;
+    //std::cout<<"did wb"<<std::endl;
     cores[core].mem(pipelined_instructions[1],memory);
-    std::cout<<"did mem"<<std::endl;
+    //std::cout<<"did mem"<<std::endl;
     cores[core].execute(pipelined_instructions[2]);
-    std::cout<<"did exe"<<std::endl;
+    //std::cout<<"did exe"<<std::endl;
     cores[core].decode(pipelined_instructions[3]);
-    std::cout<<"did dec"<<std::endl;
+    //std::cout<<"did dec"<<std::endl;
     cores[core].fetch(memory,pipelined_instructions[4]);
-    std::cout<<"did fe"<<std::endl;
+    //std::cout<<"did fe"<<std::endl;
     pipelined_instructions.erase(pipelined_instructions.begin());
 
 }
@@ -72,7 +72,7 @@ Processor::Processor(std::string file1, std::string file2,bool pipeline,bool for
         memory[index] = instructions2.at(index - 856);
     }
     
-    std::ofstream MembFile("memory_before.txt");
+    std::ofstream MembFile("data/memory_before.txt");
 
     for (int i=0;i<1024;i++){
         MembFile << i<<","<<memory[i]<<std::endl;
@@ -133,7 +133,7 @@ Processor::Processor(std::string file1, std::string file2,bool pipeline,bool for
             std::ofstream File;
             while(!all_dummy1 && !all_dummy2){
                 
-                File.open("core0_pipe.txt",std::ios_base::app);
+                File.open("data/core0_pipe.txt",std::ios_base::app);
                 for (auto i:states1){
                     if (i.is_dummy) File<<"0 ";
                     else File<<1<<" ";
@@ -141,7 +141,7 @@ Processor::Processor(std::string file1, std::string file2,bool pipeline,bool for
                 File<<std::endl;
                 File.close();
 
-                File.open("core1_pipe.txt",std::ios_base::app);
+                File.open("data/core1_pipe.txt",std::ios_base::app);
                 for (auto i:states2){
                     if (i.is_dummy) File<<"0 ";
                     else File<<1<<" ";
@@ -238,7 +238,7 @@ Processor::Processor(std::string file1, std::string file2,bool pipeline,bool for
             }
 
             while(!all_dummy1){
-                File.open("core0_pipe.txt",std::ios_base::app);
+                File.open("data/core0_pipe.txt",std::ios_base::app);
                 for (auto i:states1){
                     if (i.is_dummy) File<<"0 ";
                     else File<<1<<" ";
@@ -289,7 +289,7 @@ Processor::Processor(std::string file1, std::string file2,bool pipeline,bool for
                 cores[0].savereg(0);
             }
             while(!all_dummy2){
-                File.open("core1_pipe.txt",std::ios_base::app);
+                File.open("data/core1_pipe.txt",std::ios_base::app);
                 for (auto i:states2){
                     if (i.is_dummy) File<<"0 ";
                     else File<<1<<" ";
@@ -353,7 +353,7 @@ Processor::Processor(std::string file1, std::string file2,bool pipeline,bool for
             }
             std::ofstream File;
             while(!all_dummy1 && !all_dummy2){
-                File.open("core0_pipe.txt",std::ios_base::app);
+                File.open("data/core0_pipe.txt",std::ios_base::app);
                 for (auto i:states1){
                     if (i.is_dummy) File<<"0 ";
                     else File<<1<<" ";
@@ -361,7 +361,7 @@ Processor::Processor(std::string file1, std::string file2,bool pipeline,bool for
                 File<<std::endl;
                 File.close();
 
-                File.open("core1_pipe.txt",std::ios_base::app);
+                File.open("data/core1_pipe.txt",std::ios_base::app);
                 for (auto i:states2){
                     if (i.is_dummy) File<<"0 ";
                     else File<<1<<" ";
@@ -480,7 +480,7 @@ Processor::Processor(std::string file1, std::string file2,bool pipeline,bool for
                 cores[1].savereg(1);
             }
             while(!all_dummy1){
-                File.open("core0_pipe.txt",std::ios_base::app);
+                File.open("data/core0_pipe.txt",std::ios_base::app);
                 for (auto i:states1){
                     if (i.is_dummy) File<<"0 ";
                     else File<<1<<" ";
@@ -542,7 +542,7 @@ Processor::Processor(std::string file1, std::string file2,bool pipeline,bool for
                 cores[0].savereg(0);
             }
             while(!all_dummy2){
-                File.open("core1_pipe.txt",std::ios_base::app);
+                File.open("data/core1_pipe.txt",std::ios_base::app);
                 for (auto i:states2){
                     if (i.is_dummy) File<<"0 ";
                     else File<<1<<" ";
@@ -609,7 +609,7 @@ Processor::Processor(std::string file1, std::string file2,bool pipeline,bool for
         }
     }
     std::cout<<instruction_count<<std::endl;
-    std::ofstream MemFile("memory_after.txt");
+    std::ofstream MemFile("data/memory_after.txt");
 
     
     for (int i=0;i<1024;i++){
