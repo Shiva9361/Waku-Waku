@@ -83,6 +83,7 @@ void Core::fetch(int memory[])
 void Core::fetch(int memory[],State &state)
 {
     if(state.is_dummy) return;
+    std::cout<<state.pc<<std::endl;
     int_instruction = memory[state.pc];
     std::bitset<32> bin_instruction(int_instruction);
     std::string instruction_string = bin_instruction.to_string();

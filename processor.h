@@ -9,7 +9,8 @@ private:
     Core cores[2] = {Core(0,84), Core(856,943)}; // .text is of size 84 words
     int clock;
     bool pipeline;
-    bool all_dummy;
+    bool all_dummy1;
+    bool all_dummy2;
     int instruction_count;
     int hazard_count_f;
     Assembler assembler;
@@ -120,136 +121,434 @@ Processor::Processor(std::string file1, std::string file2,bool pipeline,bool for
     */
     else{
         if(!forwarding){
-            std::vector<State> states = {State(0),State(0),State(0),State(0),State(0)};
+            std::vector<State> states1 = {State(0),State(0),State(0),State(0),State(0)};
+            std::vector<State> states2 = {State(856),State(856),State(856),State(856),State(856)};
             
             for (int i=0;i<4;i++){
-                states[i].is_dummy = true;
+                states1[i].is_dummy = true;
+            }
+            for (int i=0;i<4;i++){
+                states2[i].is_dummy = true;
             }
             
-            while(!all_dummy){
-                for (auto i:states){
+            while(!all_dummy1 && !all_dummy2){
+                for (auto i:states1){
+                    if (i.is_dummy) std::cout<<"stall ";
+                    else std::cout<<i.instruction<<" ";
+                }
+                std::cout<<std::endl;
+                for (auto i:states2){
                     if (i.is_dummy) std::cout<<"stall ";
                     else std::cout<<i.instruction<<" ";
                 }
                 std::cout<<std::endl;
 
-                int hazard_count =0;
-                hazardDetector.hazard_without_forwarding(states,hazard_count);
+                int hazard_count1 =0;
+                hazardDetector.hazard_without_forwarding(states1,hazard_count1);
+                int hazard_count2 =0;
+                hazardDetector.hazard_without_forwarding(states2,hazard_count2);
 
-                std::vector<State> oldStates = states;
+                std::vector<State> oldstates1 = states1;
+                std::vector<State> oldstates2 = states2;
     
-                evaluate(states,0);
+                evaluate(states1,0);
 
-                if (hazard_count>0){
-                    hazard_count_f += hazard_count;
-                    states = {states[0],states[1],State(0),oldStates[3],oldStates[4]};
-                    states[4].pc = states[3].next_pc;
-                    std::cout<<states[4].pc<<std::endl;
-                    states[2].is_dummy = true;
+                if (hazard_count1>0){
+                    hazard_count_f += hazard_count1;
+                    states1 = {states1[0],states1[1],State(0),oldstates1[3],oldstates1[4]};
+                    states1[4].pc = states1[3].next_pc;
+                    std::cout<<states1[4].pc<<std::endl;
+                    states1[2].is_dummy = true;
                 }
                 else {
-                    if (states[1].opcode == "1101111" || states[1].opcode == "1100011"){
+                    if (states1[1].opcode == "1101111" || states1[1].opcode == "1100011"){
                         // Flush
-                        states[2].is_dummy = true;
-                        states[3].is_dummy = true;
-                        states.push_back(State(states[1].next_pc));
+                        states1[2].is_dummy = true;
+                        states1[3].is_dummy = true;
+                        states1.push_back(State(states1[1].next_pc));
                     }
-                    else if (states[3].is_dummy){
-                        states.push_back(State(0));
-                        states[4].is_dummy = true;
+                    else if (states1[3].is_dummy){
+                        states1.push_back(State(0));
+                        states1[4].is_dummy = true;
                     }
                     else {
-                        states.push_back(State(states[3].next_pc));
-                        if (memory[states[3].next_pc] == 0){
-                            states[4].is_dummy = true;
+                        states1.push_back(State(states1[3].next_pc));
+                        if (memory[states1[3].next_pc] == 0){
+                            states1[4].is_dummy = true;
                         }
                     }
                     /*
                         Exit condition
                     */
-                    all_dummy = true;
-                    for (auto i:states){
+                    all_dummy1 = true;
+                    for (auto i:states1){
                         if(!i.is_dummy){
-                            all_dummy = false;
+                            all_dummy1 = false;
                         }
                     }
                    
                 }
                 cores[0].savereg(0);
+                
+                evaluate(states2,1);
+
+                if (hazard_count2>0){
+                    hazard_count_f += hazard_count2;
+                    states2 = {states2[0],states2[1],State(0),oldstates2[3],oldstates2[4]};
+                    states2[4].pc = states2[3].next_pc;
+                    std::cout<<states2[4].pc<<std::endl;
+                    states2[2].is_dummy = true;
+                }
+                else {
+                    if (states2[1].opcode == "1101111" || states2[1].opcode == "1100011"){
+                        // Flush
+                        states2[2].is_dummy = true;
+                        states2[3].is_dummy = true;
+                        states2.push_back(State(states2[1].next_pc));
+                    }
+                    else if (states2[3].is_dummy){
+                        states2.push_back(State(0));
+                        states2[4].is_dummy = true;
+                    }
+                    else {
+                        states2.push_back(State(states2[3].next_pc));
+                        if (memory[states2[3].next_pc] == 0){
+                            states2[4].is_dummy = true;
+                        }
+                    }
+                    /*
+                        Exit condition
+                    */
+                    all_dummy2 = true;
+                    for (auto i:states2){
+                        if(!i.is_dummy){
+                            all_dummy2 = false;
+                        }
+                    }
+                   
+                }
+                cores[1].savereg(1);
 
             }
+
+            while(!all_dummy1){
+                for (auto i:states1){
+                    if (i.is_dummy) std::cout<<"stall ";
+                    else std::cout<<i.instruction<<" ";
+                }
+                std::cout<<std::endl;
+                int hazard_count1 =0;
+                hazardDetector.hazard_without_forwarding(states1,hazard_count1);
+                std::vector<State> oldstates1 = states1;
+                evaluate(states1,0);
+
+                if (hazard_count1>0){
+                    hazard_count_f += hazard_count1;
+                    states1 = {states1[0],states1[1],State(0),oldstates1[3],oldstates1[4]};
+                    states1[4].pc = states1[3].next_pc;
+                    std::cout<<states1[4].pc<<std::endl;
+                    states1[2].is_dummy = true;
+                }
+                else {
+                    if (states1[1].opcode == "1101111" || states1[1].opcode == "1100011"){
+                        // Flush
+                        states1[2].is_dummy = true;
+                        states1[3].is_dummy = true;
+                        states1.push_back(State(states1[1].next_pc));
+                    }
+                    else if (states1[3].is_dummy){
+                        states1.push_back(State(0));
+                        states1[4].is_dummy = true;
+                    }
+                    else {
+                        states1.push_back(State(states1[3].next_pc));
+                        if (memory[states1[3].next_pc] == 0){
+                            states1[4].is_dummy = true;
+                        }
+                    }
+                    /*
+                        Exit condition
+                    */
+                    all_dummy1 = true;
+                    for (auto i:states1){
+                        if(!i.is_dummy){
+                            all_dummy1 = false;
+                        }
+                    }
+                   
+                }
+                cores[0].savereg(0);
+            }
+            while(!all_dummy2){
+                for (auto i:states2){
+                    if (i.is_dummy) std::cout<<"stall ";
+                    else std::cout<<i.instruction<<" ";
+                }
+                
+                std::cout<<std::endl;
+                int hazard_count2 =0;
+                hazardDetector.hazard_without_forwarding(states2,hazard_count2);
+                std::vector<State> oldstates2 = states2;
+                
+                evaluate(states2,1);
+                if (hazard_count2>0){
+                    hazard_count_f += hazard_count2;
+                    states2 = {states2[0],states2[1],State(0),oldstates2[3],oldstates2[4]};
+                    states2[4].pc = states2[3].next_pc;
+                    std::cout<<states2[4].pc<<std::endl;
+                    states2[2].is_dummy = true;
+                }
+                else {
+                    if (states2[1].opcode == "1101111" || states2[1].opcode == "1100011"){
+                        // Flush
+                        states2[2].is_dummy = true;
+                        states2[3].is_dummy = true;
+                        states2.push_back(State(states2[1].next_pc));
+                    }
+                    else if (states2[3].is_dummy){
+                        states2.push_back(State(0));
+                        states2[4].is_dummy = true;
+                    }
+                    else {
+                        states2.push_back(State(states2[3].next_pc));
+                        if (memory[states2[3].next_pc] == 0){
+                            states2[4].is_dummy = true;
+                        }
+                    }
+                    /*
+                        Exit condition
+                    */
+                    all_dummy2 = true;
+                    for (auto i:states2){
+                        if(!i.is_dummy){
+                            all_dummy2 = false;
+                        }
+                    }
+                   
+                }
+                cores[1].savereg(1);
+            }
+
         }
         else{
-            std::vector<State> states = {State(0),State(0),State(0),State(0),State(0)};
+            std::vector<State> states1 = {State(0),State(0),State(0),State(0),State(0)};
+            std::vector<State> states2 = {State(856),State(856),State(856),State(856),State(856)};
 
             for (int i=0;i<4;i++){
-                states[i].is_dummy = true;
+                states1[i].is_dummy = true;
             }
-            while(!all_dummy){
-                for (auto i:states){
+            for (int i=0;i<4;i++){
+                states2[i].is_dummy = true;
+            }
+            while(!all_dummy1 && !all_dummy2){
+                for (auto i:states1){
                     if (i.is_dummy) std::cout<<"stall ";
                     else std::cout<<i.instruction<<" ";
                 }
                 std::cout<<std::endl;
+                for (auto i:states2){
+                    if (i.is_dummy) std::cout<<"stall ";
+                    else std::cout<<i.instruction<<" ";
+                }
+                std::cout<<std::endl;
+                
+                int hazard_count_1=0; bool if_stall_1 = false; int stall_pos_1 = 2;
+                hazardDetector.hazard_with_forwarding(states1,hazard_count_1,if_stall_1,stall_pos_1);
+                
+                int hazard_count_2 =0; bool if_stall_2 = false; int stall_pos_2 = 2;
+                hazardDetector.hazard_with_forwarding(states2,hazard_count_2,if_stall_2,stall_pos_2);
 
-                int hazard_count =0; bool if_stall = false; int stall_pos = 2;
-                hazardDetector.hazard_with_forwarding(states,hazard_count,if_stall,stall_pos);
-
-                std::vector<State> oldStates = states;
+                std::vector<State> oldstates1 = states1;
+                std::vector<State> oldstates2 = states2;
     
-                evaluate(states,0);
+                evaluate(states1,0);
+                evaluate(states2,1);
 
-                if (if_stall){
-                    if (stall_pos==0){
-                        states = {states[0],State(0),oldStates[2],oldStates[3],oldStates[4]};
-                        states[4].pc = states[3].next_pc;
-                        states[1].is_dummy = true;
+                if (if_stall_1){
+                    if (stall_pos_1==0){
+                        states1 = {states1[0],State(0),oldstates1[2],oldstates1[3],oldstates1[4]};
+                        states1[4].pc = states1[3].next_pc;
+                        states1[1].is_dummy = true;
                     } 
-                    else if (stall_pos==1){
-                        states = {states[0],states[1],State(0),oldStates[3],oldStates[4]};
-                        states[4].pc = states[3].next_pc;
-                        states[2].is_dummy = true;
+                    else if (stall_pos_1==1){
+                        states1 = {states1[0],states1[1],State(0),oldstates1[3],oldstates1[4]};
+                        states1[4].pc = states1[3].next_pc;
+                        states1[2].is_dummy = true;
                     }
                 }
-                // else if (hazard_count>0){
-                //     hazard_count_f += hazard_count;
-                //     states.push_back(State(states[3].next_pc));
-                //     if (memory[states[3].next_pc] == 0){
-                //         states[4].is_dummy = true;
-                //     }
-                //     states = {states[0],states[1],State(0),oldStates[3],oldStates[4]};
-                //     states[4].pc = states[3].next_pc;
-                //     states[2].is_dummy = true;
-                // }
                 else {
-                    if (states[1].opcode == "1101111" || states[1].opcode == "1100011"){
+                    if (states1[1].opcode == "1101111" || states1[1].opcode == "1100011"){
                         // Flush
-                        states[2].is_dummy = true;
-                        states[3].is_dummy = true;
-                        states.push_back(State(states[1].next_pc));
+                        states1[2].is_dummy = true;
+                        states1[3].is_dummy = true;
+                        states1.push_back(State(states1[1].next_pc));
                     }
-                    else if (states[3].is_dummy){
-                        states.push_back(State(0));
-                        states[4].is_dummy = true;
+                    else if (states1[3].is_dummy){
+                        states1.push_back(State(0));
+                        states1[4].is_dummy = true;
                     }
                     else {
-                        states.push_back(State(states[3].next_pc));
-                        if (memory[states[3].next_pc] == 0){
-                            states[4].is_dummy = true;
+                        states1.push_back(State(states1[3].next_pc));
+                        if (memory[states1[3].next_pc] == 0){
+                            states1[4].is_dummy = true;
+                        }
+                    }
+                    
+                   
+                }
+                cores[0].savereg(0);
+                
+                if (if_stall_2){
+                    if (stall_pos_2==0){
+                        states2 = {states2[0],State(0),oldstates2[2],oldstates2[3],oldstates2[4]};
+                        states2[4].pc = states2[3].next_pc;
+                        states2[1].is_dummy = true;
+                    } 
+                    else if (stall_pos_1==1){
+                        states2 = {states2[0],states2[1],State(0),oldstates2[3],oldstates2[4]};
+                        states2[4].pc = states2[3].next_pc;
+                        states2[2].is_dummy = true;
+                    }
+                }
+                else {
+                    if (states2[1].opcode == "1101111" || states2[1].opcode == "1100011"){
+                        // Flush
+                        states2[2].is_dummy = true;
+                        states2[3].is_dummy = true;
+                        states2.push_back(State(states2[1].next_pc));
+                    }
+                    else if (states2[3].is_dummy){
+                        states2.push_back(State(0));
+                        states2[4].is_dummy = true;
+                    }
+                    else {
+                        states2.push_back(State(states2[3].next_pc));
+                        if (memory[states2[3].next_pc] == 0){
+                            states2[4].is_dummy = true;
                         }
                     }
                     /*
                         Exit condition
                     */
-                    all_dummy = true;
-                    for (auto i:states){
+                    all_dummy1 = true;
+                    for (auto i:states1){
                         if(!i.is_dummy){
-                            all_dummy = false;
+                            all_dummy1 = false;
+                        }
+                    }
+                    all_dummy2 = true;
+                    for (auto i:states2){
+                        if(!i.is_dummy){
+                            all_dummy2 = false;
+                        }
+                    }
+                   
+                }
+                cores[1].savereg(1);
+            }
+            while(!all_dummy1){
+                for (auto i:states1){
+                    if (i.is_dummy) std::cout<<"stall ";
+                    else std::cout<<i.instruction<<" ";
+                }
+                std::cout<<std::endl;
+
+                int hazard_count_1=0; bool if_stall_1 = false; int stall_pos_1 = 2;
+                hazardDetector.hazard_with_forwarding(states1,hazard_count_1,if_stall_1,stall_pos_1);
+                std::vector<State> oldstates1 = states1;
+
+                evaluate(states1,0);
+
+                if (if_stall_1){
+                    if (stall_pos_1==0){
+                        states1 = {states1[0],State(0),oldstates1[2],oldstates1[3],oldstates1[4]};
+                        states1[4].pc = states1[3].next_pc;
+                        states1[1].is_dummy = true;
+                    } 
+                    else if (stall_pos_1==1){
+                        states1 = {states1[0],states1[1],State(0),oldstates1[3],oldstates1[4]};
+                        states1[4].pc = states1[3].next_pc;
+                        states1[2].is_dummy = true;
+                    }
+                }
+                else {
+                    if (states1[1].opcode == "1101111" || states1[1].opcode == "1100011"){
+                        // Flush
+                        states1[2].is_dummy = true;
+                        states1[3].is_dummy = true;
+                        states1.push_back(State(states1[1].next_pc));
+                    }
+                    else if (states1[3].is_dummy){
+                        states1.push_back(State(0));
+                        states1[4].is_dummy = true;
+                    }
+                    else {
+                        states1.push_back(State(states1[3].next_pc));
+                        if (memory[states1[3].next_pc] == 0){
+                            states1[4].is_dummy = true;
+                        }
+                    }
+                    all_dummy1 = true;
+                    for (auto i:states1){
+                        if(!i.is_dummy){
+                            all_dummy1 = false;
                         }
                     }
                    
                 }
                 cores[0].savereg(0);
+            }
+            while(!all_dummy2){
+                for (auto i:states2){
+                    if (i.is_dummy) std::cout<<"stall ";
+                    else std::cout<<i.instruction<<" ";
+                }
+                std::cout<<std::endl;
+
+                int hazard_count_2=0; bool if_stall_2 = false; int stall_pos_2 = 2;
+                hazardDetector.hazard_with_forwarding(states2,hazard_count_2,if_stall_2,stall_pos_2);
+                std::vector<State> oldstates2 = states2;
+
+                evaluate(states2,0);
+
+                if (if_stall_2){
+                    if (stall_pos_2==0){
+                        states2 = {states2[0],State(0),oldstates2[2],oldstates2[3],oldstates2[4]};
+                        states2[4].pc = states2[3].next_pc;
+                        states2[1].is_dummy = true;
+                    } 
+                    else if (stall_pos_2==1){
+                        states2 = {states2[0],states2[1],State(0),oldstates2[3],oldstates2[4]};
+                        states2[4].pc = states2[3].next_pc;
+                        states2[2].is_dummy = true;
+                    }
+                }
+                else {
+                    if (states2[1].opcode == "1101111" || states2[1].opcode == "1100011"){
+                        // Flush
+                        states2[2].is_dummy = true;
+                        states2[3].is_dummy = true;
+                        states2.push_back(State(states2[1].next_pc));
+                    }
+                    else if (states2[3].is_dummy){
+                        states2.push_back(State(0));
+                        states2[4].is_dummy = true;
+                    }
+                    else {
+                        states2.push_back(State(states2[3].next_pc));
+                        if (memory[states2[3].next_pc] == 0){
+                            states2[4].is_dummy = true;
+                        }
+                    }
+                    all_dummy2 = true;
+                    for (auto i:states2){
+                        if(!i.is_dummy){
+                            all_dummy2 = false;
+                        }
+                    }
+                   
+                }
+                cores[1].savereg(1);
             }
         }
     }
