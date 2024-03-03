@@ -19,10 +19,10 @@ sw x4 4(x5)
 sw x9 0(x5)
 noswap:
 addi x5 x5 4
-j loop2
+beq x0 x0 loop2
 exit2:
 add x1 x0 x0
 add x5 x6 x0
-j loop1
+beq x0 x0 loop1
 exit:
 add x0 x0 x0

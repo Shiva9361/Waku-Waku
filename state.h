@@ -8,8 +8,10 @@ class State{
         std::string instruction;
         int rs1;
         int rs2;
-        int operand1;
-        int operand2;
+        long operand1;
+        long operand2;
+        bool is_operand1;
+        bool is_operand2;
         int temp_reg;
         bool write;
         int rd;
@@ -28,8 +30,10 @@ State::State(int pc){
     rs1 = -1;
     rs2 = -1;
     rd = -1; 
-    operand1 = -1;
-    operand2 = -1;
+    operand1 = 0;
+    is_operand1 = false;
+    is_operand2 = false;
+    operand2 = 0;
     write = false;   
     next_pc = -1;
 }

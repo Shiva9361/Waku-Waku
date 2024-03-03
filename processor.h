@@ -22,15 +22,21 @@ public:
 
 void Processor::evaluate(std::vector<State> &pipelined_instructions,int core){
     cores[core].writeback(pipelined_instructions[0],instruction_count);
+    std::cout<<"did wb"<<std::endl;
     cores[core].mem(pipelined_instructions[1],memory);
+    std::cout<<"did mem"<<std::endl;
     cores[core].execute(pipelined_instructions[2]);
+    std::cout<<"did exe"<<std::endl;
     cores[core].decode(pipelined_instructions[3]);
+    std::cout<<"did dec"<<std::endl;
     cores[core].fetch(memory,pipelined_instructions[4]);
+    std::cout<<"did fe"<<std::endl;
     pipelined_instructions.erase(pipelined_instructions.begin());
 
 }
 Processor::Processor(std::string file1, std::string file2,bool pipeline,bool forwarding)
 {
+    // memory[0] = 69;
     clock = 0;
     hazard_count_f = 0;
     instruction_count = 0;
@@ -186,23 +192,35 @@ Processor::Processor(std::string file1, std::string file2,bool pipeline,bool for
                 }
                 std::cout<<std::endl;
 
-                int hazard_count =0; bool if_stall = false; int stall_pos = 0;
+                int hazard_count =0; bool if_stall = false; int stall_pos = 2;
                 hazardDetector.hazard_with_forwarding(states,hazard_count,if_stall,stall_pos);
 
                 std::vector<State> oldStates = states;
     
                 evaluate(states,0);
 
-                if (hazard_count>0){
-                    hazard_count_f += hazard_count;
-                    states.push_back(State(states[3].next_pc));
-                    if (memory[states[3].next_pc] == 0){
-                        states[4].is_dummy = true;
+                if (if_stall){
+                    if (stall_pos==0){
+                        states = {states[0],State(0),oldStates[2],oldStates[3],oldStates[4]};
+                        states[4].pc = states[3].next_pc;
+                        states[1].is_dummy = true;
+                    } 
+                    else if (stall_pos==1){
+                        states = {states[0],states[1],State(0),oldStates[3],oldStates[4]};
+                        states[4].pc = states[3].next_pc;
+                        states[2].is_dummy = true;
                     }
-                    states = {states[0],State(0),oldStates[2],oldStates[3],oldStates[4]};
-                    states[4].pc = states[3].next_pc;
-                    states[1].is_dummy = true;
                 }
+                // else if (hazard_count>0){
+                //     hazard_count_f += hazard_count;
+                //     states.push_back(State(states[3].next_pc));
+                //     if (memory[states[3].next_pc] == 0){
+                //         states[4].is_dummy = true;
+                //     }
+                //     states = {states[0],states[1],State(0),oldStates[3],oldStates[4]};
+                //     states[4].pc = states[3].next_pc;
+                //     states[2].is_dummy = true;
+                // }
                 else {
                     if (states[1].opcode == "1101111" || states[1].opcode == "1100011"){
                         // Flush

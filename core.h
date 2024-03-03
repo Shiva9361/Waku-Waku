@@ -65,7 +65,7 @@ Core::Core(int pc,int dataloc)
 {
     registers[0] = 0; // x0 is hardwired to 0
     // registers[2] = 2147483632; // Stack pointer
-    registers[1] = 111;
+    // registers[1] = 111;
     // registers[5] = 84*4;
     // // registers[3] = 268435456;  // Global Pointer
     // registers[3] = 3;
@@ -332,6 +332,9 @@ int Core::execute()
 void Core::execute(State &state){
     
     if (state.is_dummy) return;
+    if (state.is_operand1 ) registers[state.rs1] = state.operand1;
+    if (state.is_operand2 ) registers[state.rs2] = state.operand2;
+
     if (state.opcode == "0110011")
     {
         
@@ -340,20 +343,8 @@ void Core::execute(State &state){
             #ifdef PRINT
             std::cout << "ID: " << "add" << std::endl;
             #endif
-            if (state.operand1 !=-1 && state.operand2!=-1){
-                state.temp_reg = state.operand1 + state.operand2;
-            }
-            else if (state.operand1 !=-1){
-                state.temp_reg = state.operand1 + registers[state.rs2];
-            }
-            else if (state.operand2 !=-1){
-                state.temp_reg = registers[state.rs1] + state.operand2;
-            }
-            else {
-                state.temp_reg = registers[state.rs1] + registers[state.rs2];
-            }
+            state.temp_reg = registers[state.rs1] + registers[state.rs2];
             
-            std::cout << state.temp_reg << " reg"<<std::endl;
         }
         else if (state.func3 == "000" && state.func7 == "0100000")
         {   
@@ -515,13 +506,21 @@ void Core::mem(int *memory)
 void Core::mem(State &state,int *memory){
     
     if (state.is_dummy) return;
+    if (state.is_operand1 ) registers[state.rs1] = state.operand1;
+    if (state.is_operand2 ) registers[state.rs2] = state.operand2;
     
     if (state.opcode == "0000011")
     {
         if (state.func3 == "010")
         {
             if (state.rd != 0){
-                state.temp_reg = memory[registers[state.rs1]/4 + state.imm/4];
+                if (state.is_operand1){
+                    state.temp_reg = memory[state.operand1/4 + state.imm/4];
+                }
+                else{
+                    state.temp_reg = memory[registers[state.rs1]/4 + state.imm/4];
+                }
+                
             }
         }
     }
@@ -529,6 +528,9 @@ void Core::mem(State &state,int *memory){
     {
         if (state.func3 == "010")
         {
+            if (state.is_operand1 == true){
+                memory[state.operand1/4 + state.imm/4] = registers[state.rs1];
+            }
             memory[registers[state.rs2]/4 + state.imm/4] = registers[state.rs1];
             std::cout<<"Wrote to mem"<<registers[state.rs1]<<std::endl;
         }
