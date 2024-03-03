@@ -130,18 +130,24 @@ Processor::Processor(std::string file1, std::string file2,bool pipeline,bool for
             for (int i=0;i<4;i++){
                 states2[i].is_dummy = true;
             }
-            
+            std::ofstream File;
             while(!all_dummy1 && !all_dummy2){
+                
+                File.open("core0_pipe.txt",std::ios_base::app);
                 for (auto i:states1){
-                    if (i.is_dummy) std::cout<<"stall ";
-                    else std::cout<<i.instruction<<" ";
+                    if (i.is_dummy) File<<"0 ";
+                    else File<<1<<" ";
                 }
-                std::cout<<std::endl;
+                File<<std::endl;
+                File.close();
+
+                File.open("core1_pipe.txt",std::ios_base::app);
                 for (auto i:states2){
-                    if (i.is_dummy) std::cout<<"stall ";
-                    else std::cout<<i.instruction<<" ";
+                    if (i.is_dummy) File<<"0 ";
+                    else File<<1<<" ";
                 }
-                std::cout<<std::endl;
+                File<<std::endl;
+                File.close();
 
                 int hazard_count1 =0;
                 hazardDetector.hazard_without_forwarding(states1,hazard_count1);
@@ -232,11 +238,14 @@ Processor::Processor(std::string file1, std::string file2,bool pipeline,bool for
             }
 
             while(!all_dummy1){
+                File.open("core0_pipe.txt",std::ios_base::app);
                 for (auto i:states1){
-                    if (i.is_dummy) std::cout<<"stall ";
-                    else std::cout<<i.instruction<<" ";
+                    if (i.is_dummy) File<<"0 ";
+                    else File<<1<<" ";
                 }
-                std::cout<<std::endl;
+                File<<std::endl;
+                File.close();
+
                 int hazard_count1 =0;
                 hazardDetector.hazard_without_forwarding(states1,hazard_count1);
                 std::vector<State> oldstates1 = states1;
@@ -280,12 +289,14 @@ Processor::Processor(std::string file1, std::string file2,bool pipeline,bool for
                 cores[0].savereg(0);
             }
             while(!all_dummy2){
+                File.open("core1_pipe.txt",std::ios_base::app);
                 for (auto i:states2){
-                    if (i.is_dummy) std::cout<<"stall ";
-                    else std::cout<<i.instruction<<" ";
+                    if (i.is_dummy) File<<"0 ";
+                    else File<<1<<" ";
                 }
-                
-                std::cout<<std::endl;
+                File<<std::endl;
+                File.close();
+
                 int hazard_count2 =0;
                 hazardDetector.hazard_without_forwarding(states2,hazard_count2);
                 std::vector<State> oldstates2 = states2;
@@ -340,17 +351,23 @@ Processor::Processor(std::string file1, std::string file2,bool pipeline,bool for
             for (int i=0;i<4;i++){
                 states2[i].is_dummy = true;
             }
+            std::ofstream File;
             while(!all_dummy1 && !all_dummy2){
+                File.open("core0_pipe.txt",std::ios_base::app);
                 for (auto i:states1){
-                    if (i.is_dummy) std::cout<<"stall ";
-                    else std::cout<<i.instruction<<" ";
+                    if (i.is_dummy) File<<"0 ";
+                    else File<<1<<" ";
                 }
-                std::cout<<std::endl;
+                File<<std::endl;
+                File.close();
+
+                File.open("core1_pipe.txt",std::ios_base::app);
                 for (auto i:states2){
-                    if (i.is_dummy) std::cout<<"stall ";
-                    else std::cout<<i.instruction<<" ";
+                    if (i.is_dummy) File<<"0 ";
+                    else File<<1<<" ";
                 }
-                std::cout<<std::endl;
+                File<<std::endl;
+                File.close();
                 
                 int hazard_count_1=0; bool if_stall_1 = false; int stall_pos_1 = 2;
                 hazardDetector.hazard_with_forwarding(states1,hazard_count_1,if_stall_1,stall_pos_1);
@@ -463,11 +480,13 @@ Processor::Processor(std::string file1, std::string file2,bool pipeline,bool for
                 cores[1].savereg(1);
             }
             while(!all_dummy1){
+                File.open("core0_pipe.txt",std::ios_base::app);
                 for (auto i:states1){
-                    if (i.is_dummy) std::cout<<"stall ";
-                    else std::cout<<i.instruction<<" ";
+                    if (i.is_dummy) File<<"0 ";
+                    else File<<1<<" ";
                 }
-                std::cout<<std::endl;
+                File<<std::endl;
+                File.close();
 
                 int hazard_count_1=0; bool if_stall_1 = false; int stall_pos_1 = 2;
                 hazardDetector.hazard_with_forwarding(states1,hazard_count_1,if_stall_1,stall_pos_1);
@@ -523,11 +542,13 @@ Processor::Processor(std::string file1, std::string file2,bool pipeline,bool for
                 cores[0].savereg(0);
             }
             while(!all_dummy2){
+                File.open("core1_pipe.txt",std::ios_base::app);
                 for (auto i:states2){
-                    if (i.is_dummy) std::cout<<"stall ";
-                    else std::cout<<i.instruction<<" ";
+                    if (i.is_dummy) File<<"0 ";
+                    else File<<1<<" ";
                 }
-                std::cout<<std::endl;
+                File<<std::endl;
+                File.close();
 
                 int hazard_count_2=0; bool if_stall_2 = false; int stall_pos_2 = 2;
                 hazardDetector.hazard_with_forwarding(states2,hazard_count_2,if_stall_2,stall_pos_2);

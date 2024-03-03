@@ -560,10 +560,10 @@ void Core::writeback(State &state,int &instruction_count){
     }
 }
 void Core::savereg(int core){
-    std::ofstream File("core0.txt",std::ios_base::app);
+    std::ofstream File("core0_reg.txt",std::ios_base::app);
     if (core == 1) {
         File.close();
-        File.open("core1.txt",std::ios_base::app);
+        File.open("core1_reg.txt",std::ios_base::app);
     }
 
     for (int i = 0; i<32;i++){
