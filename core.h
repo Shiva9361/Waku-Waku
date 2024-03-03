@@ -1,7 +1,6 @@
 #include <bitset>
 #include <iostream>
 #include "hazardDetector.h"
-#include "BTB.h"
 #include <bits/stdc++.h>
 #include <string>
 
@@ -47,7 +46,6 @@ private:
     std::string func3;
     std::string func7;
 
-    BTB btb;
 public:
     int pc;
     Core(int pc,int dataloc);
