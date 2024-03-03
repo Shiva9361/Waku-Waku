@@ -30,6 +30,9 @@ def run():
     core0_pipeline_states = []
 
     if request.method == "POST":
+        """
+        Remove the files of previous run
+        """
         if not os.path.exists("a.out"):
             os.system("g++ main.cpp")
         if os.path.exists("data/core1_reg.txt"):
@@ -93,7 +96,9 @@ def run():
                 states = core_pipe_file.read().replace("\r\n","\n").split("\n")
                 template_state = ["write_back","memory","execute","decode/register_fetch","instruction_fetch"]
                 for state in states:
-                    state_list = state.split(" ")[:-1]  
+                    state_list = state.split(" ")
+                    if (len(state_list)>5): 
+                        state_list = state_list[:-1]  
                     for _ in range(len(state_list)):
                         if state_list[_] == "0":
                             state_list[_] = "stall"
@@ -105,15 +110,15 @@ def run():
                 states = core_pipe_file.read().replace("\r\n","\n").split("\n")
                 template_state = ["write_back","memory","execute","decode/register_fetch","instruction_fetch"]
                 for state in states:
-                    state_list = state.split(" ")[:-1]
+                    state_list = state.split(" ")
+                    if (len(state_list)>5): 
+                        state_list = state_list[:-1]  
                     for _ in range(len(state_list)):
                         if state_list[_] == "0":
                             state_list[_] = "stall"
                         else:
                             state_list[_] = template_state[_]
                     core0_pipeline_states.append(state_list)
-
-
 
     return {"message":"Done"}
 
