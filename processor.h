@@ -379,9 +379,17 @@ Processor::Processor(std::string file1, std::string file2,bool pipeline,bool for
                 else {
                     if (states1[1].opcode == "1101111" || states1[1].opcode == "1100011"){
                         // Flush
-                        states1[2].is_dummy = true;
-                        states1[3].is_dummy = true;
-                        states1.push_back(State(states1[1].next_pc));
+                        if (states1[1].next_pc == states1[2].pc){
+                            states1.push_back(State(states1[3].next_pc));
+                            if (memory[states1[3].next_pc] == 0){
+                                states1[4].is_dummy = true;
+                            }
+                        }
+                        else {
+                            states1[2].is_dummy = true;
+                            states1[3].is_dummy = true;
+                            states1.push_back(State(states1[1].next_pc));
+                        }
                     }
                     else if (states1[3].is_dummy){
                         states1.push_back(State(0));
@@ -404,7 +412,7 @@ Processor::Processor(std::string file1, std::string file2,bool pipeline,bool for
                         states2[4].pc = states2[3].next_pc;
                         states2[1].is_dummy = true;
                     } 
-                    else if (stall_pos_1==1){
+                    else if (stall_pos_2==1){
                         states2 = {states2[0],states2[1],State(0),oldstates2[3],oldstates2[4]};
                         states2[4].pc = states2[3].next_pc;
                         states2[2].is_dummy = true;
@@ -413,9 +421,17 @@ Processor::Processor(std::string file1, std::string file2,bool pipeline,bool for
                 else {
                     if (states2[1].opcode == "1101111" || states2[1].opcode == "1100011"){
                         // Flush
-                        states2[2].is_dummy = true;
-                        states2[3].is_dummy = true;
-                        states2.push_back(State(states2[1].next_pc));
+                        if (states2[1].next_pc == states2[2].pc){
+                            states2.push_back(State(states2[3].next_pc));
+                            if (memory[states2[3].next_pc] == 0){
+                                states2[4].is_dummy = true;
+                            }
+                        }
+                        else {
+                            states2[2].is_dummy = true;
+                            states2[3].is_dummy = true;
+                            states2.push_back(State(states2[1].next_pc));
+                        }
                     }
                     else if (states2[3].is_dummy){
                         states2.push_back(State(0));
@@ -474,9 +490,17 @@ Processor::Processor(std::string file1, std::string file2,bool pipeline,bool for
                 else {
                     if (states1[1].opcode == "1101111" || states1[1].opcode == "1100011"){
                         // Flush
-                        states1[2].is_dummy = true;
-                        states1[3].is_dummy = true;
-                        states1.push_back(State(states1[1].next_pc));
+                        if (states1[1].next_pc == states1[2].pc){
+                            states1.push_back(State(states1[3].next_pc));
+                            if (memory[states1[3].next_pc] == 0){
+                                states1[4].is_dummy = true;
+                            }
+                        }
+                        else {
+                            states1[2].is_dummy = true;
+                            states1[3].is_dummy = true;
+                            states1.push_back(State(states1[1].next_pc));
+                        }
                     }
                     else if (states1[3].is_dummy){
                         states1.push_back(State(0));
@@ -509,7 +533,7 @@ Processor::Processor(std::string file1, std::string file2,bool pipeline,bool for
                 hazardDetector.hazard_with_forwarding(states2,hazard_count_2,if_stall_2,stall_pos_2);
                 std::vector<State> oldstates2 = states2;
 
-                evaluate(states2,0);
+                evaluate(states2,1);
 
                 if (if_stall_2){
                     if (stall_pos_2==0){
@@ -526,9 +550,18 @@ Processor::Processor(std::string file1, std::string file2,bool pipeline,bool for
                 else {
                     if (states2[1].opcode == "1101111" || states2[1].opcode == "1100011"){
                         // Flush
-                        states2[2].is_dummy = true;
-                        states2[3].is_dummy = true;
-                        states2.push_back(State(states2[1].next_pc));
+                        if (states2[1].next_pc == states2[2].pc){
+                            states2.push_back(State(states2[3].next_pc));
+                            if (memory[states2[3].next_pc] == 0){
+                                states2[4].is_dummy = true;
+                            }
+                        }
+                        else {
+                            states2[2].is_dummy = true;
+                            states2[3].is_dummy = true;
+                            states2.push_back(State(states2[1].next_pc));
+                        }
+                        
                     }
                     else if (states2[3].is_dummy){
                         states2.push_back(State(0));
@@ -538,7 +571,9 @@ Processor::Processor(std::string file1, std::string file2,bool pipeline,bool for
                         states2.push_back(State(states2[3].next_pc));
                         if (memory[states2[3].next_pc] == 0){
                             states2[4].is_dummy = true;
-                        }
+                        } if (memory[states2[3].next_pc] == 0){
+                                states2[4].is_dummy = true;
+                            }
                     }
                     all_dummy2 = true;
                     for (auto i:states2){

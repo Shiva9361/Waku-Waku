@@ -61,6 +61,7 @@ public:
     void mem(int *memory);
     void mem(State &instruction,int *memory);
     void writeback(State &instruction,int &instruction_count);
+    bool predict();
 };
 
 Core::Core(int pc,int dataloc)
@@ -91,10 +92,14 @@ void Core::fetch(int memory[],State &state)
     std::string instruction_string = bin_instruction.to_string();
  
     state.instruction = instruction_string;
-    // if(btb.find(pc) && btb.size() != 0){
-    //     state.branch_taken = btb.predict(pc);
-    // }
-    state.next_pc = state.pc+1; // no prediction for now
+    
+    if (!predict()){
+        state.next_pc = state.pc+1; 
+    }
+    else {
+        // Nvm 
+    }
+    
 }
 
 void Core::decode()
@@ -566,4 +571,8 @@ void Core::savereg(int core){
     }
     File<<"\n";
     File.close();
+}
+
+bool Core::predict(){
+    return false; // Always not taken , Static predictor
 }
