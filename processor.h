@@ -17,11 +17,11 @@ private:
     HazardDetector hazardDetector;
 
 public:
-    Processor(std::string file1, std::string file2,bool pipeline,bool forwarding);
-    void evaluate(std::vector<State> &pipelined_instructions,int core);
+    Processor(std::string file1, std::string file2,bool pipeline,bool forwarding,std::map<std::string,int> latencies);
+    void evaluate(std::vector<State> &pipelined_instructions,int core,std::map<std::string,int> latencies);
 };
 
-void Processor::evaluate(std::vector<State> &pipelined_instructions,int core){
+void Processor::evaluate(std::vector<State> &pipelined_instructions,int core,std::map<std::string,int> latencies){
     cores[core].writeback(pipelined_instructions[0],instruction_count);
     //std::cout<<"did wb"<<std::endl;
     cores[core].mem(pipelined_instructions[1],memory);
@@ -34,8 +34,32 @@ void Processor::evaluate(std::vector<State> &pipelined_instructions,int core){
     //std::cout<<"did fe"<<std::endl;
     pipelined_instructions.erase(pipelined_instructions.begin());
 
+    /*
+        Adding latencies
+    */
+    
+    if (pipelined_instructions[2].opcode == "0110011"){
+        if (pipelined_instructions[2].func3 == "000" && pipelined_instructions[2].func7 == "0000000"){
+            pipelined_instructions[2].latency = latencies["add"];
+        }
+        else if (pipelined_instructions[2].func3 == "000" && pipelined_instructions[2].func7 == "0100000"){
+            pipelined_instructions[2].latency = latencies["sub"];
+        }
+        else if (pipelined_instructions[2].func3 == "000" && pipelined_instructions[2].func7 == "0000001"){
+            pipelined_instructions[2].latency = latencies["mul"];
+        }
+        else if (pipelined_instructions[2].func3 == "100" && pipelined_instructions[2].func7 == "0000001"){
+            pipelined_instructions[2].latency = latencies["div"];
+        }
+    }
+    else if (pipelined_instructions[2].opcode == "0010011"){
+        pipelined_instructions[2].latency = latencies["addi"];
+    }
+    
+    clock++;
+
 }
-Processor::Processor(std::string file1, std::string file2,bool pipeline,bool forwarding)
+Processor::Processor(std::string file1, std::string file2,bool pipeline,bool forwarding,std::map<std::string,int> latencies)
 {
     // memory[0] = 69;
     clock = 0;
@@ -157,13 +181,12 @@ Processor::Processor(std::string file1, std::string file2,bool pipeline,bool for
                 std::vector<State> oldstates1 = states1;
                 std::vector<State> oldstates2 = states2;
     
-                evaluate(states1,0);
+                evaluate(states1,0,latencies);
 
                 if (hazard_count1>0){
                     hazard_count_f += hazard_count1;
                     states1 = {states1[0],states1[1],State(0),oldstates1[3],oldstates1[4]};
                     states1[4].pc = states1[3].next_pc;
-                    std::cout<<states1[4].pc<<std::endl;
                     states1[2].is_dummy = true;
                 }
                 else {
@@ -172,6 +195,12 @@ Processor::Processor(std::string file1, std::string file2,bool pipeline,bool for
                         states1[2].is_dummy = true;
                         states1[3].is_dummy = true;
                         states1.push_back(State(states1[1].next_pc));
+                    }
+                    else if ((states1[1].opcode == "0110011"|| states1[1].opcode == "0010011" ) && states1[1].latency>0 && !states1[1].is_dummy){
+                        std::cout<<"hi";
+                        states1 = {states1[0],State(0),states1[1],oldstates1[3],oldstates1[4]};
+                        states1[4].pc = states1[3].next_pc;
+                        states1[1].is_dummy = true;
                     }
                     else if (states1[3].is_dummy){
                         states1.push_back(State(0));
@@ -196,7 +225,7 @@ Processor::Processor(std::string file1, std::string file2,bool pipeline,bool for
                 }
                 cores[0].savereg(0);
                 
-                evaluate(states2,1);
+                evaluate(states2,1,latencies);
 
                 if (hazard_count2>0){
                     hazard_count_f += hazard_count2;
@@ -211,6 +240,11 @@ Processor::Processor(std::string file1, std::string file2,bool pipeline,bool for
                         states2[2].is_dummy = true;
                         states2[3].is_dummy = true;
                         states2.push_back(State(states2[1].next_pc));
+                    }
+                    else if ((states2[1].opcode == "0110011"|| states2[1].opcode == "0010011" ) && states2[1].latency>0 && !states2[1].is_dummy){
+                        states2 = {states2[0],State(0),states2[1],oldstates2[3],oldstates2[4]};
+                        states2[4].pc = states2[3].next_pc;
+                        states2[1].is_dummy = true;
                     }
                     else if (states2[3].is_dummy){
                         states2.push_back(State(0));
@@ -249,7 +283,7 @@ Processor::Processor(std::string file1, std::string file2,bool pipeline,bool for
                 int hazard_count1 =0;
                 hazardDetector.hazard_without_forwarding(states1,hazard_count1);
                 std::vector<State> oldstates1 = states1;
-                evaluate(states1,0);
+                evaluate(states1,0,latencies);
 
                 if (hazard_count1>0){
                     hazard_count_f += hazard_count1;
@@ -259,17 +293,28 @@ Processor::Processor(std::string file1, std::string file2,bool pipeline,bool for
                     states1[2].is_dummy = true;
                 }
                 else {
+                    for (auto i:states1){
+                        std::cout<<i.latency<<"l";
+                    }
+                    std::cout<<std::endl;
                     if (states1[1].opcode == "1101111" || states1[1].opcode == "1100011"){
                         // Flush
                         states1[2].is_dummy = true;
                         states1[3].is_dummy = true;
                         states1.push_back(State(states1[1].next_pc));
                     }
+                    else if ((states1[1].opcode == "0110011"|| states1[1].opcode == "0010011" ) && states1[1].latency>0 &&!states1[1].is_dummy){
+                        std::cout<<"hi";
+                        states1 = {states1[0],State(0),states1[1],oldstates1[3],oldstates1[4]};
+                        states1[4].pc = states1[3].next_pc;
+                        states1[1].is_dummy = true;
+                    }
                     else if (states1[3].is_dummy){
                         states1.push_back(State(0));
                         states1[4].is_dummy = true;
                     }
                     else {
+                        std::cout<<states1[1].opcode<<"out"<<std::endl;
                         states1.push_back(State(states1[3].next_pc));
                         if (memory[states1[3].next_pc] == 0){
                             states1[4].is_dummy = true;
@@ -301,7 +346,7 @@ Processor::Processor(std::string file1, std::string file2,bool pipeline,bool for
                 hazardDetector.hazard_without_forwarding(states2,hazard_count2);
                 std::vector<State> oldstates2 = states2;
                 
-                evaluate(states2,1);
+                evaluate(states2,1,latencies);
                 if (hazard_count2>0){
                     hazard_count_f += hazard_count2;
                     states2 = {states2[0],states2[1],State(0),oldstates2[3],oldstates2[4]};
@@ -315,6 +360,11 @@ Processor::Processor(std::string file1, std::string file2,bool pipeline,bool for
                         states2[2].is_dummy = true;
                         states2[3].is_dummy = true;
                         states2.push_back(State(states2[1].next_pc));
+                    }
+                    else if ((states2[1].opcode == "0110011"|| states2[1].opcode == "0010011" ) && states2[1].latency>0 && !states2[1].is_dummy){
+                        states2 = {states2[0],State(0),states2[1],oldstates2[3],oldstates2[4]};
+                        states2[4].pc = states2[3].next_pc;
+                        states2[1].is_dummy = true;
                     }
                     else if (states2[3].is_dummy){
                         states2.push_back(State(0));
@@ -378,8 +428,8 @@ Processor::Processor(std::string file1, std::string file2,bool pipeline,bool for
                 std::vector<State> oldstates1 = states1;
                 std::vector<State> oldstates2 = states2;
     
-                evaluate(states1,0);
-                evaluate(states2,1);
+                evaluate(states1,0,latencies);
+                evaluate(states2,1,latencies);
 
                 if (if_stall_1){
                     if (stall_pos_1==0){
@@ -408,6 +458,13 @@ Processor::Processor(std::string file1, std::string file2,bool pipeline,bool for
                             states1.push_back(State(states1[1].next_pc));
                         }
                     }
+                    else if ((states1[1].opcode == "0110011"|| states1[1].opcode == "0010011" ) && states1[1].latency>0 &&!states1[1].is_dummy){
+                        std::cout<<"hi";
+                        states1 = {states1[0],State(0),states1[1],oldstates1[3],oldstates1[4]};
+                        states1[4].pc = states1[3].next_pc;
+                        states1[1].is_dummy = true;
+                    }
+                    
                     else if (states1[3].is_dummy){
                         states1.push_back(State(0));
                         states1[4].is_dummy = true;
@@ -449,6 +506,11 @@ Processor::Processor(std::string file1, std::string file2,bool pipeline,bool for
                             states2[3].is_dummy = true;
                             states2.push_back(State(states2[1].next_pc));
                         }
+                    }
+                    else if ((states2[1].opcode == "0110011"|| states2[1].opcode == "0010011" ) && states2[1].latency>0 && !states2[1].is_dummy){
+                        states2 = {states2[0],State(0),states2[1],oldstates2[3],oldstates2[4]};
+                        states2[4].pc = states2[3].next_pc;
+                        states2[1].is_dummy = true;
                     }
                     else if (states2[3].is_dummy){
                         states2.push_back(State(0));
@@ -492,7 +554,7 @@ Processor::Processor(std::string file1, std::string file2,bool pipeline,bool for
                 hazardDetector.hazard_with_forwarding(states1,hazard_count_1,if_stall_1,stall_pos_1);
                 std::vector<State> oldstates1 = states1;
 
-                evaluate(states1,0);
+                evaluate(states1,0,latencies);
 
                 if (if_stall_1){
                     if (stall_pos_1==0){
@@ -520,6 +582,12 @@ Processor::Processor(std::string file1, std::string file2,bool pipeline,bool for
                             states1[3].is_dummy = true;
                             states1.push_back(State(states1[1].next_pc));
                         }
+                    }
+                    else if ((states1[1].opcode == "0110011"|| states1[1].opcode == "0010011" ) && states1[1].latency>0 &&!states1[1].is_dummy){
+                        std::cout<<"hi";
+                        states1 = {states1[0],State(0),states1[1],oldstates1[3],oldstates1[4]};
+                        states1[4].pc = states1[3].next_pc;
+                        states1[1].is_dummy = true;
                     }
                     else if (states1[3].is_dummy){
                         states1.push_back(State(0));
@@ -554,7 +622,7 @@ Processor::Processor(std::string file1, std::string file2,bool pipeline,bool for
                 hazardDetector.hazard_with_forwarding(states2,hazard_count_2,if_stall_2,stall_pos_2);
                 std::vector<State> oldstates2 = states2;
 
-                evaluate(states2,1);
+                evaluate(states2,1,latencies);
 
                 if (if_stall_2){
                     if (stall_pos_2==0){
@@ -583,6 +651,11 @@ Processor::Processor(std::string file1, std::string file2,bool pipeline,bool for
                             states2.push_back(State(states2[1].next_pc));
                         }
                         
+                    }
+                    else if ((states2[1].opcode == "0110011"|| states2[1].opcode == "0010011" ) && states2[1].latency>0 && !states2[1].is_dummy){
+                        states2 = {states2[0],State(0),states2[1],oldstates2[3],oldstates2[4]};
+                        states2[4].pc = states2[3].next_pc;
+                        states2[1].is_dummy = true;
                     }
                     else if (states2[3].is_dummy){
                         states2.push_back(State(0));

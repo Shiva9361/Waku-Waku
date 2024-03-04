@@ -16,6 +16,7 @@ class State{
         bool write;
         int rd;
         int imm;
+        int latency;
         std::string opcode;
         std::string func3;
         std::string func7;
@@ -34,6 +35,7 @@ State::State(int pc){
     operand1 = 0;
     is_operand1 = false;
     is_operand2 = false;
+    latency = 1;
     operand2 = 0;
     write = false;   
     next_pc = -1;

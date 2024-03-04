@@ -54,9 +54,13 @@ def run():
             instruction = ["./a.out","codes/selection_sort.s","codes/bubble_sort.s","false","false"]
 
         process = Popen(instruction, shell=False, stdout= PIPE, stdin=PIPE)
-        stdout, stderr = process.communicate()
+        
+        input = f"{request.form['addi']} {request.form['add']} {request.form['div']} {request.form['mul']} {request.form['sub']}"
+        
+        stdout, stderr = process.communicate(input = str.encode(input))
 
-        with open("memory_after.txt") as mem_file:
+
+        with open("data/memory_after.txt") as mem_file:
             memory= mem_file.read()
             memory.replace("\r\n","\n")
             memory = memory.split("\n")

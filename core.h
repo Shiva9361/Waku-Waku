@@ -59,7 +59,7 @@ public:
     void mem(int *memory);
     void mem(State &instruction,int *memory);
     void writeback(State &instruction,int &instruction_count);
-    bool predict();
+    bool predict(int pc);
 };
 
 Core::Core(int pc,int dataloc)
@@ -91,7 +91,7 @@ void Core::fetch(int memory[],State &state)
  
     state.instruction = instruction_string;
     
-    if (!predict()){
+    if (!predict(state.pc)){
         state.next_pc = state.pc+1; 
     }
     else {
@@ -347,6 +347,7 @@ void Core::execute(State &state){
     if (state.opcode == "0110011")
     {
         
+        state.latency-=1;
         if (state.func3 == "000" && state.func7 == "0000000")
         {
             #ifdef PRINT
@@ -443,6 +444,7 @@ void Core::execute(State &state){
     }
     else if (state.opcode == "0010011")
     {
+        state.latency-=1;
         if (state.func3 == "000")
         {
             #ifdef PRINT
@@ -571,6 +573,6 @@ void Core::savereg(int core){
     File.close();
 }
 
-bool Core::predict(){
+bool Core::predict(int pc){
     return false; // Always not taken , Static predictor
 }
