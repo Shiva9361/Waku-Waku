@@ -1,2 +1,5 @@
-add x4 x5 x6
-add x1 x2 x3
+loop1:
+addi x4 x5 6
+addi x1 x4 3
+addi x4 x1 3
+j loop1

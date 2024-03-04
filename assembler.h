@@ -147,9 +147,11 @@ std::pair<std::vector<int>, std::vector<int>> Assembler::assemble(std::string fi
         }
         else if (tokens[0] == ".text")
         {
-            lc = 0; continue;
+            lc = 0;
+            continue;
         }
-        else if(tokens[0] == "#" || tokens[0][0] == '#'){
+        else if (tokens[0] == "#" || tokens[0][0] == '#')
+        {
             continue;
         }
         lc++;
@@ -175,20 +177,20 @@ std::pair<std::vector<int>, std::vector<int>> Assembler::assemble(std::string fi
         {
             if (tokens[1] == ".word")
             {
-                labels[tokens[0].substr(0,tokens[0].length()-1)] = offset;
+                labels[tokens[0].substr(0, tokens[0].length() - 1)] = offset;
                 for (int i = 2; i < tokens.size(); i++)
                 {
                     data.push_back(std::stoi(tokens[i], nullptr, 10));
                     offset++;
                 }
-                
             }
         }
         else if (tokens[0] == ".text")
         {
             break;
         }
-        else if(tokens[0] == "#" || tokens[0][0] == '#'){
+        else if (tokens[0] == "#" || tokens[0][0] == '#')
+        {
             continue;
         }
     }
@@ -210,10 +212,6 @@ std::pair<std::vector<int>, std::vector<int>> Assembler::assemble(std::string fi
             tokens.push_back(token);
         }
         int index = 0;
-        // if (tokens[0][tokens[0].length() - 1] == ':' && tokens[1] != "")
-        // {
-        //     index = 1;
-        // }
         if (tokens[index] == "add")
         {
             std::string opcode = "0110011";
@@ -341,7 +339,7 @@ std::pair<std::vector<int>, std::vector<int>> Assembler::assemble(std::string fi
             std::string rs1 = lookup_table[tokens[index + 1]];
             std::string rs2 = lookup_table[tokens[index + 2]];
             int int_imm = labels[tokens[index + 3]];
-            std::bitset<12> bin_imm(int_imm); 
+            std::bitset<12> bin_imm(int_imm);
             std::string imm = bin_imm.to_string();
             std::string imm2 = imm.substr(0, 7);
             std::string imm1 = imm.substr(7, 5);
@@ -403,7 +401,8 @@ std::pair<std::vector<int>, std::vector<int>> Assembler::assemble(std::string fi
             int bin_instruction = bin_to_int(instruction);
             result.push_back(bin_instruction);
         }
-        else if(tokens[index] == "j"){
+        else if (tokens[index] == "j")
+        {
             std::string opcode = "1101111";
             std::string rd = "00000";
             int int_imm = labels[tokens[index + 1]];
@@ -413,7 +412,8 @@ std::pair<std::vector<int>, std::vector<int>> Assembler::assemble(std::string fi
             int bin_instruction = std::stoi(instruction, nullptr, 2);
             result.push_back(bin_instruction);
         }
-        else if(tokens[index] == "#" || tokens[index][0] == '#'){
+        else if (tokens[index] == "#" || tokens[index][0] == '#')
+        {
             continue;
         }
         ic++;

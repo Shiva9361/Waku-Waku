@@ -24,7 +24,7 @@ sw x6 0(x16)
 exit2:
 addi x15 x15 4
 addi x2 x2 1
-beq x0 x0 loop1
+j loop1
 exit:
 addi x1 x1 1
 addi x20 x20 4
