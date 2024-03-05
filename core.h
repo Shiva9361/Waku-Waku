@@ -649,7 +649,7 @@ void Core::writeback(State &state, int &instruction_count)
     if (state.write && state.rd != 0)
     {
         registers[state.rd] = state.temp_reg;
-        std::cout << "Wrote " << state.temp_reg << " TO " << state.rd << std::endl;
+        std::cout << "Wrote " << state.temp_reg << " to " << state.rd << std::endl;
     }
 }
 void Core::savereg(int core)

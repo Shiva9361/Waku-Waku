@@ -10,7 +10,6 @@ private:
     int clock_0;
     int clock_1;
     int clock;
-    bool pipeline;
     bool all_dummy1;
     bool all_dummy2;
     int instruction_count_1;
@@ -23,8 +22,125 @@ private:
 public:
     Processor(std::string file1, std::string file2, bool pipeline, bool forwarding, std::map<std::string, int> latencies);
     void evaluate(std::vector<State> &pipelined_instructions, int core, std::map<std::string, int> latencies);
+    void run_unpipelined(int instructions_1_length, int instructions_2_length);
+    void run_pipelined_wo_forwarding(std::map<std::string, int> latencies);
+    void run_pipelined_with_forwarding(std::map<std::string, int> latencies);
+    void save_stats();
+    void save_mem();
+    void write_pipeline_file(int core, std::vector<State> states);
 };
 
+Processor::Processor(std::string file1, std::string file2, bool pipeline, bool forwarding, std::map<std::string, int> latencies)
+{
+
+    clock_0 = 0;
+    clock = 0;
+    clock_1 = 0;
+    hazard_count_0 = 0;
+    hazard_count_1 = 0;
+    instruction_count_1 = 0;
+    instruction_count_0 = 0;
+    /*
+        Initialize by adding programs to memory
+    */
+    int dataloc1 = 84;
+    int dataloc2 = 943;
+    std::pair<std::vector<int>, std::vector<int>> result1 = assembler.assemble(file1);
+    std::pair<std::vector<int>, std::vector<int>> result2 = assembler.assemble(file2);
+
+    std::vector<int> instructions1 = result1.first;
+    std::vector<int> instructions2 = result2.first;
+
+    std::vector<int> data1 = result1.second;
+    std::vector<int> data2 = result2.second;
+
+    // Saving .data to memory
+    for (auto i : data1)
+    {
+        memory[dataloc1++] = i;
+    }
+
+    for (auto i : data2)
+    {
+        memory[dataloc2++] = i;
+    }
+
+    for (int index = 0; index < instructions1.size(); index++)
+    {
+        memory[index] = instructions1.at(index);
+    }
+    for (int index = 856; index - 856 < instructions2.size(); index++)
+    {
+        memory[index] = instructions2.at(index - 856);
+    }
+
+    std::ofstream MembFile("data/memory_before.txt");
+
+    for (int i = 0; i < 1024; i++)
+    {
+        MembFile << i << "," << memory[i] << std::endl;
+    }
+    MembFile.close();
+    if (pipeline)
+    {
+        if (forwarding)
+        {
+            run_pipelined_with_forwarding(latencies);
+        }
+        else
+        {
+            run_pipelined_wo_forwarding(latencies);
+        }
+    }
+    else
+    {
+        run_unpipelined(instructions1.size(), instructions2.size());
+    }
+    save_mem();
+}
+
+void Processor::write_pipeline_file(int core, std::vector<State> states)
+{
+    std::ofstream pipefile;
+    pipefile.open("data/core1_pipe.txt", std::ios_base::app);
+    if (core == 0)
+    {
+        pipefile.close();
+        pipefile.open("data/core0_pipe.txt", std::ios_base::app);
+    }
+    for (auto i : states)
+    {
+        if (i.is_dummy)
+            pipefile << "0 ";
+        else
+            pipefile << 1 << " ";
+    }
+    pipefile << std::endl;
+    pipefile.close();
+    return;
+}
+
+void Processor::save_stats()
+{
+    std::ofstream Stats("data/stats.txt");
+    Stats << instruction_count_0 << std::endl;
+    Stats << instruction_count_1 << std::endl;
+    Stats << hazard_count_0 << std::endl;
+    Stats << hazard_count_1 << std::endl;
+    Stats << clock_0 << std::endl;
+    Stats << clock_1 << std::endl;
+}
+
+void Processor::save_mem()
+{
+    std::ofstream MemFile("data/memory_after.txt");
+
+    for (int i = 0; i < 1024; i++)
+    {
+        MemFile << i << "," << memory[i] << std::endl;
+    }
+    MemFile.close();
+}
 void Processor::evaluate(std::vector<State> &pipelined_instructions, int core, std::map<std::string, int> latencies)
 {
     if (core == 0)
@@ -84,770 +200,631 @@ void Processor::evaluate(std::vector<State> &pipelined_instructions, int core, s
         clock_1++;
     }
 }
-Processor::Processor(std::string file1, std::string file2, bool pipeline, bool forwarding, std::map<std::string, int> latencies)
+
+void Processor::run_unpipelined(int instructions1_length, int instructions2_length)
 {
-    // memory[0] = 69;
-    clock_0 = 0;
-    clock = 0;
-    clock_1 = 0;
-    hazard_count_0 = 0;
-    hazard_count_1 = 0;
-    instruction_count_1 = 0;
-    instruction_count_0 = 0;
-    int dataloc1 = 84;
-    int dataloc2 = 943;
-    std::pair<std::vector<int>, std::vector<int>> result1 = assembler.assemble(file1);
-    std::pair<std::vector<int>, std::vector<int>> result2 = assembler.assemble(file2);
 
-    std::vector<int> instructions1 = result1.first;
-    std::vector<int> instructions2 = result2.first;
-
-    std::vector<int> data1 = result1.second;
-    std::vector<int> data2 = result2.second;
-
-    // Saving .data to memory
-    for (auto i : data1)
+    int i = 0, j = 0;
+    while (i < instructions1_length && j < instructions2_length)
     {
-        memory[dataloc1++] = i;
+        cores[0].fetch(memory);
+        cores[1].fetch(memory);
+        cores[0].decode();
+        cores[1].decode();
+        i = cores[0].execute();
+        j = cores[1].execute() - 856;
+        cores[0].mem(memory);
+        cores[1].mem(memory);
+        cores[0].savereg(0);
+        cores[1].savereg(1);
+        clock++;
     }
-
-    for (auto i : data2)
+    while (i < instructions1_length)
     {
-        memory[dataloc2++] = i;
+        cores[0].fetch(memory);
+        cores[0].decode();
+        i = cores[0].execute();
+        cores[0].mem(memory);
+        cores[0].savereg(0);
+        cores[1].savereg(1);
+        clock++;
     }
-
-    for (int index = 0; index < instructions1.size(); index++)
+    while (j < instructions2_length)
     {
-        memory[index] = instructions1.at(index);
+        cores[1].fetch(memory);
+        cores[1].decode();
+        j = cores[1].execute() - 856;
+        cores[1].mem(memory);
+        cores[0].savereg(0);
+        cores[1].savereg(1);
+        clock++;
     }
-    for (int index = 856; index - 856 < instructions2.size(); index++)
+}
+
+void Processor::run_pipelined_wo_forwarding(std::map<std::string, int> latencies)
+{
+    std::vector<State> states1 = {State(0), State(0), State(0), State(0), State(0)};
+    std::vector<State> states2 = {State(856), State(856), State(856), State(856), State(856)};
+
+    for (int i = 0; i < 4; i++)
     {
-        memory[index] = instructions2.at(index - 856);
+        states1[i].is_dummy = true;
     }
-
-    std::ofstream MembFile("data/memory_before.txt");
-
-    for (int i = 0; i < 1024; i++)
+    for (int i = 0; i < 4; i++)
     {
-        MembFile << i << "," << memory[i] << std::endl;
+        states2[i].is_dummy = true;
     }
-    MembFile.close();
-
-    if (!pipeline)
+    std::ofstream File;
+    while (!all_dummy1 && !all_dummy2)
     {
-        int i = 0, j = 0;
-        while (i < instructions1.size() && j < instructions2.size())
+
+        write_pipeline_file(0, states1);
+        write_pipeline_file(1, states2);
+
+        int hazard_count1 = 0;
+        hazardDetector.hazard_without_forwarding(states1, hazard_count1);
+        int hazard_count2 = 0;
+        hazardDetector.hazard_without_forwarding(states2, hazard_count2);
+
+        hazard_count_0 += hazard_count1;
+        hazard_count_1 += hazard_count2;
+        std::vector<State> oldstates1 = states1;
+        std::vector<State> oldstates2 = states2;
+
+        evaluate(states1, 0, latencies);
+
+        if (states1[1].opcode == "1101111" || states1[1].opcode == "1100011")
         {
-            cores[0].fetch(memory);
-            cores[1].fetch(memory);
-            cores[0].decode();
-            cores[1].decode();
-            i = cores[0].execute();
-            j = cores[1].execute() - 856;
-            cores[0].mem(memory);
-            cores[1].mem(memory);
-            cores[0].savereg(0);
-            cores[1].savereg(1);
-            clock++;
+            // Flush
+            states1[2].is_dummy = true;
+            states1[3].is_dummy = true;
+            states1.push_back(State(states1[1].next_pc));
         }
-        while (i < instructions1.size())
+        else if (hazard_count1 > 0)
         {
-            cores[0].fetch(memory);
-            cores[0].decode();
-            i = cores[0].execute();
-            cores[0].mem(memory);
-            cores[0].savereg(0);
-            cores[1].savereg(1);
-            clock++;
+            states1 = {states1[0], states1[1], State(0), oldstates1[3], oldstates1[4]};
+            states1[4].pc = states1[3].next_pc;
+            states1[2].is_dummy = true;
         }
-        while (j < instructions2.size())
+        else
         {
-            cores[1].fetch(memory);
-            cores[1].decode();
-            j = cores[1].execute() - 856;
-            cores[1].mem(memory);
-            cores[0].savereg(0);
-            cores[1].savereg(1);
-            clock++;
+            if ((states1[1].opcode == "0110011" || states1[1].opcode == "0010011") && states1[1].latency > 0 && !states1[1].is_dummy)
+            {
+                states1 = {states1[0], State(0), states1[1], oldstates1[3], oldstates1[4]};
+                states1[4].pc = states1[3].next_pc;
+                states1[1].is_dummy = true;
+            }
+            else if (states1[3].is_dummy)
+            {
+                states1.push_back(State(0));
+                states1[4].is_dummy = true;
+            }
+            else
+            {
+                states1.push_back(State(states1[3].next_pc));
+                if (memory[states1[3].next_pc] == 0)
+                {
+                    states1[4].is_dummy = true;
+                }
+            }
+            /*
+                Exit condition
+            */
+            all_dummy1 = true;
+            for (auto i : states1)
+            {
+                if (!i.is_dummy)
+                {
+                    all_dummy1 = false;
+                }
+            }
         }
+        cores[0].savereg(0);
+
+        evaluate(states2, 1, latencies);
+
+        if (states2[1].opcode == "1101111" || states2[1].opcode == "1100011")
+        {
+            // Flush
+            states2[2].is_dummy = true;
+            states2[3].is_dummy = true;
+            states2.push_back(State(states2[1].next_pc));
+        }
+        else if (hazard_count2 > 0)
+        {
+            states2 = {states2[0], states2[1], State(0), oldstates2[3], oldstates2[4]};
+            states2[4].pc = states2[3].next_pc;
+            states2[2].is_dummy = true;
+        }
+        else
+        {
+            if ((states2[1].opcode == "0110011" || states2[1].opcode == "0010011") && states2[1].latency > 0 && !states2[1].is_dummy)
+            {
+                states2 = {states2[0], State(0), states2[1], oldstates2[3], oldstates2[4]};
+                states2[4].pc = states2[3].next_pc;
+                states2[1].is_dummy = true;
+            }
+            else if (states2[3].is_dummy)
+            {
+                states2.push_back(State(0));
+                states2[4].is_dummy = true;
+            }
+            else
+            {
+                states2.push_back(State(states2[3].next_pc));
+                if (memory[states2[3].next_pc] == 0)
+                {
+                    states2[4].is_dummy = true;
+                }
+            }
+            /*
+                Exit condition
+            */
+            all_dummy2 = true;
+            for (auto i : states2)
+            {
+                if (!i.is_dummy)
+                {
+                    all_dummy2 = false;
+                }
+            }
+        }
+        cores[1].savereg(1);
     }
-    /*
-        Pipeline
-    */
-    else
+
+    while (!all_dummy1)
     {
-        if (!forwarding)
+        write_pipeline_file(0, states1);
+
+        int hazard_count1 = 0;
+        hazardDetector.hazard_without_forwarding(states1, hazard_count1);
+
+        hazard_count_0 += hazard_count1;
+
+        std::vector<State> oldstates1 = states1;
+        evaluate(states1, 0, latencies);
+
+        if (states1[1].opcode == "1101111" || states1[1].opcode == "1100011")
         {
-            std::vector<State> states1 = {State(0), State(0), State(0), State(0), State(0)};
-            std::vector<State> states2 = {State(856), State(856), State(856), State(856), State(856)};
-
-            for (int i = 0; i < 4; i++)
+            // Flush
+            states1[2].is_dummy = true;
+            states1[3].is_dummy = true;
+            states1.push_back(State(states1[1].next_pc));
+        }
+        else if (hazard_count1 > 0)
+        {
+            states1 = {states1[0], states1[1], State(0), oldstates1[3], oldstates1[4]};
+            states1[4].pc = states1[3].next_pc;
+            states1[2].is_dummy = true;
+        }
+        else
+        {
+            if ((states1[1].opcode == "0110011" || states1[1].opcode == "0010011") && states1[1].latency > 0 && !states1[1].is_dummy)
             {
-                states1[i].is_dummy = true;
+                states1 = {states1[0], State(0), states1[1], oldstates1[3], oldstates1[4]};
+                states1[4].pc = states1[3].next_pc;
+                states1[1].is_dummy = true;
             }
-            for (int i = 0; i < 4; i++)
+            else if (states1[3].is_dummy)
             {
-                states2[i].is_dummy = true;
+                states1.push_back(State(0));
+                states1[4].is_dummy = true;
             }
-            std::ofstream File;
-            while (!all_dummy1 && !all_dummy2)
+            else
             {
-
-                File.open("data/core0_pipe.txt", std::ios_base::app);
-                for (auto i : states1)
+                states1.push_back(State(states1[3].next_pc));
+                if (memory[states1[3].next_pc] == 0)
                 {
-                    if (i.is_dummy)
-                        File << "0 ";
-                    else
-                        File << 1 << " ";
+                    states1[4].is_dummy = true;
                 }
-                File << std::endl;
-                File.close();
-
-                File.open("data/core1_pipe.txt", std::ios_base::app);
-                for (auto i : states2)
-                {
-                    if (i.is_dummy)
-                        File << "0 ";
-                    else
-                        File << 1 << " ";
-                }
-                File << std::endl;
-                File.close();
-
-                int hazard_count1 = 0;
-                hazardDetector.hazard_without_forwarding(states1, hazard_count1);
-                int hazard_count2 = 0;
-                hazardDetector.hazard_without_forwarding(states2, hazard_count2);
-
-                hazard_count_0 += hazard_count1;
-                hazard_count_1 += hazard_count2;
-                std::vector<State> oldstates1 = states1;
-                std::vector<State> oldstates2 = states2;
-
-                evaluate(states1, 0, latencies);
-
-                if (states1[1].opcode == "1101111" || states1[1].opcode == "1100011")
-                {
-                    // Flush
-                    states1[2].is_dummy = true;
-                    states1[3].is_dummy = true;
-                    states1.push_back(State(states1[1].next_pc));
-                }
-                else if (hazard_count1 > 0)
-                {
-                    states1 = {states1[0], states1[1], State(0), oldstates1[3], oldstates1[4]};
-                    states1[4].pc = states1[3].next_pc;
-                    states1[2].is_dummy = true;
-                }
-                else
-                {
-                    if ((states1[1].opcode == "0110011" || states1[1].opcode == "0010011") && states1[1].latency > 0 && !states1[1].is_dummy)
-                    {
-                        states1 = {states1[0], State(0), states1[1], oldstates1[3], oldstates1[4]};
-                        states1[4].pc = states1[3].next_pc;
-                        states1[1].is_dummy = true;
-                    }
-                    else if (states1[3].is_dummy)
-                    {
-                        states1.push_back(State(0));
-                        states1[4].is_dummy = true;
-                    }
-                    else
-                    {
-                        states1.push_back(State(states1[3].next_pc));
-                        if (memory[states1[3].next_pc] == 0)
-                        {
-                            states1[4].is_dummy = true;
-                        }
-                    }
-                    /*
-                        Exit condition
-                    */
-                    all_dummy1 = true;
-                    for (auto i : states1)
-                    {
-                        if (!i.is_dummy)
-                        {
-                            all_dummy1 = false;
-                        }
-                    }
-                }
-                cores[0].savereg(0);
-
-                evaluate(states2, 1, latencies);
-
-                if (states2[1].opcode == "1101111" || states2[1].opcode == "1100011")
-                {
-                    // Flush
-                    states2[2].is_dummy = true;
-                    states2[3].is_dummy = true;
-                    states2.push_back(State(states2[1].next_pc));
-                }
-                else if (hazard_count2 > 0)
-                {
-                    states2 = {states2[0], states2[1], State(0), oldstates2[3], oldstates2[4]};
-                    states2[4].pc = states2[3].next_pc;
-                    states2[2].is_dummy = true;
-                }
-                else
-                {
-                    if ((states2[1].opcode == "0110011" || states2[1].opcode == "0010011") && states2[1].latency > 0 && !states2[1].is_dummy)
-                    {
-                        states2 = {states2[0], State(0), states2[1], oldstates2[3], oldstates2[4]};
-                        states2[4].pc = states2[3].next_pc;
-                        states2[1].is_dummy = true;
-                    }
-                    else if (states2[3].is_dummy)
-                    {
-                        states2.push_back(State(0));
-                        states2[4].is_dummy = true;
-                    }
-                    else
-                    {
-                        states2.push_back(State(states2[3].next_pc));
-                        if (memory[states2[3].next_pc] == 0)
-                        {
-                            states2[4].is_dummy = true;
-                        }
-                    }
-                    /*
-                        Exit condition
-                    */
-                    all_dummy2 = true;
-                    for (auto i : states2)
-                    {
-                        if (!i.is_dummy)
-                        {
-                            all_dummy2 = false;
-                        }
-                    }
-                }
-                cores[1].savereg(1);
             }
-
-            while (!all_dummy1)
+            /*
+                Exit condition
+            */
+            all_dummy1 = true;
+            for (auto i : states1)
             {
-                File.open("data/core0_pipe.txt", std::ios_base::app);
-                for (auto i : states1)
+                if (!i.is_dummy)
                 {
-                    if (i.is_dummy)
-                        File << "0 ";
-                    else
-                        File << 1 << " ";
+                    all_dummy1 = false;
                 }
-                File << std::endl;
-                File.close();
-
-                int hazard_count1 = 0;
-                hazardDetector.hazard_without_forwarding(states1, hazard_count1);
-
-                hazard_count_0 += hazard_count1;
-
-                std::vector<State> oldstates1 = states1;
-                evaluate(states1, 0, latencies);
-
-                if (states1[1].opcode == "1101111" || states1[1].opcode == "1100011")
-                {
-                    // Flush
-                    states1[2].is_dummy = true;
-                    states1[3].is_dummy = true;
-                    states1.push_back(State(states1[1].next_pc));
-                }
-                else if (hazard_count1 > 0)
-                {
-                    states1 = {states1[0], states1[1], State(0), oldstates1[3], oldstates1[4]};
-                    states1[4].pc = states1[3].next_pc;
-                    states1[2].is_dummy = true;
-                }
-                else
-                {
-                    if ((states1[1].opcode == "0110011" || states1[1].opcode == "0010011") && states1[1].latency > 0 && !states1[1].is_dummy)
-                    {
-                        states1 = {states1[0], State(0), states1[1], oldstates1[3], oldstates1[4]};
-                        states1[4].pc = states1[3].next_pc;
-                        states1[1].is_dummy = true;
-                    }
-                    else if (states1[3].is_dummy)
-                    {
-                        states1.push_back(State(0));
-                        states1[4].is_dummy = true;
-                    }
-                    else
-                    {
-                        states1.push_back(State(states1[3].next_pc));
-                        if (memory[states1[3].next_pc] == 0)
-                        {
-                            states1[4].is_dummy = true;
-                        }
-                    }
-                    /*
-                        Exit condition
-                    */
-                    all_dummy1 = true;
-                    for (auto i : states1)
-                    {
-                        if (!i.is_dummy)
-                        {
-                            all_dummy1 = false;
-                        }
-                    }
-                }
-                cores[0].savereg(0);
             }
-            while (!all_dummy2)
+        }
+        cores[0].savereg(0);
+    }
+    while (!all_dummy2)
+    {
+        write_pipeline_file(1, states2);
+
+        int hazard_count2 = 0;
+        hazardDetector.hazard_without_forwarding(states2, hazard_count2);
+
+        hazard_count_1 += hazard_count2;
+        std::vector<State> oldstates2 = states2;
+
+        evaluate(states2, 1, latencies);
+
+        if (states2[1].opcode == "1101111" || states2[1].opcode == "1100011")
+        {
+            // Flush
+            states2[2].is_dummy = true;
+            states2[3].is_dummy = true;
+            states2.push_back(State(states2[1].next_pc));
+        }
+        else if (hazard_count2 > 0)
+        {
+            states2 = {states2[0], states2[1], State(0), oldstates2[3], oldstates2[4]};
+            states2[4].pc = states2[3].next_pc;
+            states2[2].is_dummy = true;
+        }
+        else
+        {
+            if ((states2[1].opcode == "0110011" || states2[1].opcode == "0010011") && states2[1].latency > 0 && !states2[1].is_dummy)
             {
-                File.open("data/core1_pipe.txt", std::ios_base::app);
-                for (auto i : states2)
+                states2 = {states2[0], State(0), states2[1], oldstates2[3], oldstates2[4]};
+                states2[4].pc = states2[3].next_pc;
+                states2[1].is_dummy = true;
+            }
+            else if (states2[3].is_dummy)
+            {
+                states2.push_back(State(0));
+                states2[4].is_dummy = true;
+            }
+            else
+            {
+                states2.push_back(State(states2[3].next_pc));
+                if (memory[states2[3].next_pc] == 0)
                 {
-                    if (i.is_dummy)
-                        File << "0 ";
-                    else
-                        File << 1 << " ";
+                    states2[4].is_dummy = true;
                 }
-                File << std::endl;
-                File.close();
-
-                int hazard_count2 = 0;
-                hazardDetector.hazard_without_forwarding(states2, hazard_count2);
-
-                hazard_count_1 += hazard_count2;
-                std::vector<State> oldstates2 = states2;
-
-                evaluate(states2, 1, latencies);
-
-                if (states2[1].opcode == "1101111" || states2[1].opcode == "1100011")
+            }
+            all_dummy2 = true;
+            for (auto i : states2)
+            {
+                if (!i.is_dummy)
                 {
-                    // Flush
-                    states2[2].is_dummy = true;
-                    states2[3].is_dummy = true;
-                    states2.push_back(State(states2[1].next_pc));
+                    all_dummy2 = false;
                 }
-                else if (hazard_count2 > 0)
-                {
-                    states2 = {states2[0], states2[1], State(0), oldstates2[3], oldstates2[4]};
-                    states2[4].pc = states2[3].next_pc;
-                    states2[2].is_dummy = true;
-                }
-                else
-                {
-                    if ((states2[1].opcode == "0110011" || states2[1].opcode == "0010011") && states2[1].latency > 0 && !states2[1].is_dummy)
-                    {
-                        states2 = {states2[0], State(0), states2[1], oldstates2[3], oldstates2[4]};
-                        states2[4].pc = states2[3].next_pc;
-                        states2[1].is_dummy = true;
-                    }
-                    else if (states2[3].is_dummy)
-                    {
-                        states2.push_back(State(0));
-                        states2[4].is_dummy = true;
-                    }
-                    else
-                    {
-                        states2.push_back(State(states2[3].next_pc));
-                        if (memory[states2[3].next_pc] == 0)
-                        {
-                            states2[4].is_dummy = true;
-                        }
-                    }
-                    all_dummy2 = true;
-                    for (auto i : states2)
-                    {
-                        if (!i.is_dummy)
-                        {
-                            all_dummy2 = false;
-                        }
-                    }
-                }
-                cores[1].savereg(1);
+            }
+        }
+        cores[1].savereg(1);
+    }
+    save_stats();
+}
+
+void Processor::run_pipelined_with_forwarding(std::map<std::string, int> latencies)
+{
+    std::vector<State> states1 = {State(0), State(0), State(0), State(0), State(0)};
+    std::vector<State> states2 = {State(856), State(856), State(856), State(856), State(856)};
+
+    for (int i = 0; i < 4; i++)
+    {
+        states1[i].is_dummy = true;
+    }
+    for (int i = 0; i < 4; i++)
+    {
+        states2[i].is_dummy = true;
+    }
+
+    while (!all_dummy1 && !all_dummy2)
+    {
+        write_pipeline_file(0, states1);
+        write_pipeline_file(1, states2);
+
+        int hazard_count1 = 0;
+        bool if_stall_1 = false;
+        int stall_pos_1 = 2;
+        hazardDetector.hazard_with_forwarding(states1, hazard_count1, if_stall_1, stall_pos_1);
+
+        int hazard_count2 = 0;
+        bool if_stall_2 = false;
+        int stall_pos_2 = 2;
+        hazardDetector.hazard_with_forwarding(states2, hazard_count2, if_stall_2, stall_pos_2);
+
+        hazard_count_0 += hazard_count1;
+        hazard_count_1 += hazard_count2;
+
+        std::vector<State> oldstates1 = states1;
+        std::vector<State> oldstates2 = states2;
+
+        evaluate(states1, 0, latencies);
+        evaluate(states2, 1, latencies);
+
+        if (if_stall_1)
+        {
+            if (stall_pos_1 == 0)
+            {
+                states1 = {states1[0], State(0), oldstates1[2], oldstates1[3], oldstates1[4]};
+                states1[4].pc = states1[3].next_pc;
+                states1[1].is_dummy = true;
+            }
+            else if (stall_pos_1 == 1)
+            {
+                states1 = {states1[0], states1[1], State(0), oldstates1[3], oldstates1[4]};
+                states1[4].pc = states1[3].next_pc;
+                states1[2].is_dummy = true;
             }
         }
         else
         {
-            std::vector<State> states1 = {State(0), State(0), State(0), State(0), State(0)};
-            std::vector<State> states2 = {State(856), State(856), State(856), State(856), State(856)};
-
-            for (int i = 0; i < 4; i++)
+            if (states1[1].opcode == "1101111" || states1[1].opcode == "1100011")
             {
-                states1[i].is_dummy = true;
-            }
-            for (int i = 0; i < 4; i++)
-            {
-                states2[i].is_dummy = true;
-            }
-            std::ofstream File;
-            while (!all_dummy1 && !all_dummy2)
-            {
-                File.open("data/core0_pipe.txt", std::ios_base::app);
-                for (auto i : states1)
+                // Flush
+                if (states1[1].next_pc == states1[2].pc)
                 {
-                    if (i.is_dummy)
-                        File << "0 ";
-                    else
-                        File << 1 << " ";
-                }
-                File << std::endl;
-                File.close();
-
-                File.open("data/core1_pipe.txt", std::ios_base::app);
-                for (auto i : states2)
-                {
-                    if (i.is_dummy)
-                        File << "0 ";
-                    else
-                        File << 1 << " ";
-                }
-                File << std::endl;
-                File.close();
-
-                int hazard_count1 = 0;
-                bool if_stall_1 = false;
-                int stall_pos_1 = 2;
-                hazardDetector.hazard_with_forwarding(states1, hazard_count1, if_stall_1, stall_pos_1);
-
-                int hazard_count2 = 0;
-                bool if_stall_2 = false;
-                int stall_pos_2 = 2;
-                hazardDetector.hazard_with_forwarding(states2, hazard_count2, if_stall_2, stall_pos_2);
-
-                hazard_count_0 += hazard_count1;
-                hazard_count_1 += hazard_count2;
-
-                std::vector<State> oldstates1 = states1;
-                std::vector<State> oldstates2 = states2;
-
-                evaluate(states1, 0, latencies);
-                evaluate(states2, 1, latencies);
-
-                if (if_stall_1)
-                {
-                    if (stall_pos_1 == 0)
+                    states1.push_back(State(states1[3].next_pc));
+                    if (memory[states1[3].next_pc] == 0)
                     {
-                        states1 = {states1[0], State(0), oldstates1[2], oldstates1[3], oldstates1[4]};
-                        states1[4].pc = states1[3].next_pc;
-                        states1[1].is_dummy = true;
-                    }
-                    else if (stall_pos_1 == 1)
-                    {
-                        states1 = {states1[0], states1[1], State(0), oldstates1[3], oldstates1[4]};
-                        states1[4].pc = states1[3].next_pc;
-                        states1[2].is_dummy = true;
-                    }
-                }
-                else
-                {
-                    if (states1[1].opcode == "1101111" || states1[1].opcode == "1100011")
-                    {
-                        // Flush
-                        if (states1[1].next_pc == states1[2].pc)
-                        {
-                            states1.push_back(State(states1[3].next_pc));
-                            if (memory[states1[3].next_pc] == 0)
-                            {
-                                states1[4].is_dummy = true;
-                            }
-                        }
-                        else
-                        {
-                            states1[2].is_dummy = true;
-                            states1[3].is_dummy = true;
-                            states1.push_back(State(states1[1].next_pc));
-                        }
-                    }
-                    else if ((states1[1].opcode == "0110011" || states1[1].opcode == "0010011") && states1[1].latency > 0 && !states1[1].is_dummy)
-                    {
-                        states1 = {states1[0], State(0), states1[1], oldstates1[3], oldstates1[4]};
-                        states1[4].pc = states1[3].next_pc;
-                        states1[1].is_dummy = true;
-                    }
-
-                    else if (states1[3].is_dummy)
-                    {
-                        states1.push_back(State(0));
                         states1[4].is_dummy = true;
                     }
-                    else
-                    {
-                        states1.push_back(State(states1[3].next_pc));
-                        if (memory[states1[3].next_pc] == 0)
-                        {
-                            states1[4].is_dummy = true;
-                        }
-                    }
-                }
-                cores[0].savereg(0);
-
-                if (if_stall_2)
-                {
-                    if (stall_pos_2 == 0)
-                    {
-                        states2 = {states2[0], State(0), oldstates2[2], oldstates2[3], oldstates2[4]};
-                        states2[4].pc = states2[3].next_pc;
-                        states2[1].is_dummy = true;
-                    }
-                    else if (stall_pos_2 == 1)
-                    {
-                        states2 = {states2[0], states2[1], State(0), oldstates2[3], oldstates2[4]};
-                        states2[4].pc = states2[3].next_pc;
-                        states2[2].is_dummy = true;
-                    }
                 }
                 else
                 {
-                    if (states2[1].opcode == "1101111" || states2[1].opcode == "1100011")
-                    {
-                        // Flush
-                        if (states2[1].next_pc == states2[2].pc)
-                        {
-                            states2.push_back(State(states2[3].next_pc));
-                            if (memory[states2[3].next_pc] == 0)
-                            {
-                                states2[4].is_dummy = true;
-                            }
-                        }
-                        else
-                        {
-                            states2[2].is_dummy = true;
-                            states2[3].is_dummy = true;
-                            states2.push_back(State(states2[1].next_pc));
-                        }
-                    }
-                    else if ((states2[1].opcode == "0110011" || states2[1].opcode == "0010011") && states2[1].latency > 0 && !states2[1].is_dummy)
-                    {
-                        states2 = {states2[0], State(0), states2[1], oldstates2[3], oldstates2[4]};
-                        states2[4].pc = states2[3].next_pc;
-                        states2[1].is_dummy = true;
-                    }
-                    else if (states2[3].is_dummy)
-                    {
-                        states2.push_back(State(0));
-                        states2[4].is_dummy = true;
-                    }
-                    else
-                    {
-                        states2.push_back(State(states2[3].next_pc));
-                        if (memory[states2[3].next_pc] == 0)
-                        {
-                            states2[4].is_dummy = true;
-                        }
-                    }
-                    /*
-                        Exit condition
-                    */
-                    all_dummy1 = true;
-                    for (auto i : states1)
-                    {
-                        if (!i.is_dummy)
-                        {
-                            all_dummy1 = false;
-                        }
-                    }
-                    all_dummy2 = true;
-                    for (auto i : states2)
-                    {
-                        if (!i.is_dummy)
-                        {
-                            all_dummy2 = false;
-                        }
-                    }
+                    states1[2].is_dummy = true;
+                    states1[3].is_dummy = true;
+                    states1.push_back(State(states1[1].next_pc));
                 }
-                cores[1].savereg(1);
             }
-            while (!all_dummy1)
+            else if ((states1[1].opcode == "0110011" || states1[1].opcode == "0010011") && states1[1].latency > 0 && !states1[1].is_dummy)
             {
-                File.open("data/core0_pipe.txt", std::ios_base::app);
-                for (auto i : states1)
-                {
-                    if (i.is_dummy)
-                        File << "0 ";
-                    else
-                        File << 1 << " ";
-                }
-                File << std::endl;
-                File.close();
-
-                int hazard_count1 = 0;
-                bool if_stall_1 = false;
-                int stall_pos_1 = 2;
-                hazardDetector.hazard_with_forwarding(states1, hazard_count1, if_stall_1, stall_pos_1);
-                hazard_count_0 += hazard_count1;
-
-                std::vector<State> oldstates1 = states1;
-
-                evaluate(states1, 0, latencies);
-
-                if (if_stall_1)
-                {
-                    if (stall_pos_1 == 0)
-                    {
-                        states1 = {states1[0], State(0), oldstates1[2], oldstates1[3], oldstates1[4]};
-                        states1[4].pc = states1[3].next_pc;
-                        states1[1].is_dummy = true;
-                    }
-                    else if (stall_pos_1 == 1)
-                    {
-                        states1 = {states1[0], states1[1], State(0), oldstates1[3], oldstates1[4]};
-                        states1[4].pc = states1[3].next_pc;
-                        states1[2].is_dummy = true;
-                    }
-                }
-                else
-                {
-                    if (states1[1].opcode == "1101111" || states1[1].opcode == "1100011")
-                    {
-                        // Flush
-                        if (states1[1].next_pc == states1[2].pc)
-                        {
-                            states1.push_back(State(states1[3].next_pc));
-                            if (memory[states1[3].next_pc] == 0)
-                            {
-                                states1[4].is_dummy = true;
-                            }
-                        }
-                        else
-                        {
-                            states1[2].is_dummy = true;
-                            states1[3].is_dummy = true;
-                            states1.push_back(State(states1[1].next_pc));
-                        }
-                    }
-                    else if ((states1[1].opcode == "0110011" || states1[1].opcode == "0010011") && states1[1].latency > 0 && !states1[1].is_dummy)
-                    {
-                        states1 = {states1[0], State(0), states1[1], oldstates1[3], oldstates1[4]};
-                        states1[4].pc = states1[3].next_pc;
-                        states1[1].is_dummy = true;
-                    }
-                    else if (states1[3].is_dummy)
-                    {
-                        states1.push_back(State(0));
-                        states1[4].is_dummy = true;
-                    }
-                    else
-                    {
-                        states1.push_back(State(states1[3].next_pc));
-                        if (memory[states1[3].next_pc] == 0)
-                        {
-                            states1[4].is_dummy = true;
-                        }
-                    }
-                    all_dummy1 = true;
-                    for (auto i : states1)
-                    {
-                        if (!i.is_dummy)
-                        {
-                            all_dummy1 = false;
-                        }
-                    }
-                }
-                cores[0].savereg(0);
+                states1 = {states1[0], State(0), states1[1], oldstates1[3], oldstates1[4]};
+                states1[4].pc = states1[3].next_pc;
+                states1[1].is_dummy = true;
             }
-            while (!all_dummy2)
+
+            else if (states1[3].is_dummy)
             {
-                File.open("data/core1_pipe.txt", std::ios_base::app);
-                for (auto i : states2)
+                states1.push_back(State(0));
+                states1[4].is_dummy = true;
+            }
+            else
+            {
+                states1.push_back(State(states1[3].next_pc));
+                if (memory[states1[3].next_pc] == 0)
                 {
-                    if (i.is_dummy)
-                        File << "0 ";
-                    else
-                        File << 1 << " ";
+                    states1[4].is_dummy = true;
                 }
-                File << std::endl;
-                File.close();
-
-                int hazard_count2 = 0;
-                bool if_stall_2 = false;
-                int stall_pos_2 = 2;
-                hazardDetector.hazard_with_forwarding(states2, hazard_count2, if_stall_2, stall_pos_2);
-                hazard_count_1 += hazard_count2;
-
-                std::vector<State> oldstates2 = states2;
-
-                evaluate(states2, 1, latencies);
-
-                if (if_stall_2)
-                {
-                    if (stall_pos_2 == 0)
-                    {
-                        states2 = {states2[0], State(0), oldstates2[2], oldstates2[3], oldstates2[4]};
-                        states2[4].pc = states2[3].next_pc;
-                        states2[1].is_dummy = true;
-                    }
-                    else if (stall_pos_2 == 1)
-                    {
-                        states2 = {states2[0], states2[1], State(0), oldstates2[3], oldstates2[4]};
-                        states2[4].pc = states2[3].next_pc;
-                        states2[2].is_dummy = true;
-                    }
-                }
-                else
-                {
-                    if (states2[1].opcode == "1101111" || states2[1].opcode == "1100011")
-                    {
-                        // Flush
-                        if (states2[1].next_pc == states2[2].pc)
-                        {
-                            states2.push_back(State(states2[3].next_pc));
-                            if (memory[states2[3].next_pc] == 0)
-                            {
-                                states2[4].is_dummy = true;
-                            }
-                        }
-                        else
-                        {
-                            states2[2].is_dummy = true;
-                            states2[3].is_dummy = true;
-                            states2.push_back(State(states2[1].next_pc));
-                        }
-                    }
-                    else if ((states2[1].opcode == "0110011" || states2[1].opcode == "0010011") && states2[1].latency > 0 && !states2[1].is_dummy)
-                    {
-                        states2 = {states2[0], State(0), states2[1], oldstates2[3], oldstates2[4]};
-                        states2[4].pc = states2[3].next_pc;
-                        states2[1].is_dummy = true;
-                    }
-                    else if (states2[3].is_dummy)
-                    {
-                        states2.push_back(State(0));
-                        states2[4].is_dummy = true;
-                    }
-                    else
-                    {
-                        states2.push_back(State(states2[3].next_pc));
-                        if (memory[states2[3].next_pc] == 0)
-                        {
-                            states2[4].is_dummy = true;
-                        }
-                        if (memory[states2[3].next_pc] == 0)
-                        {
-                            states2[4].is_dummy = true;
-                        }
-                    }
-                    all_dummy2 = true;
-                    for (auto i : states2)
-                    {
-                        if (!i.is_dummy)
-                        {
-                            all_dummy2 = false;
-                        }
-                    }
-                }
-                cores[1].savereg(1);
             }
         }
+        cores[0].savereg(0);
+
+        if (if_stall_2)
+        {
+            if (stall_pos_2 == 0)
+            {
+                states2 = {states2[0], State(0), oldstates2[2], oldstates2[3], oldstates2[4]};
+                states2[4].pc = states2[3].next_pc;
+                states2[1].is_dummy = true;
+            }
+            else if (stall_pos_2 == 1)
+            {
+                states2 = {states2[0], states2[1], State(0), oldstates2[3], oldstates2[4]};
+                states2[4].pc = states2[3].next_pc;
+                states2[2].is_dummy = true;
+            }
+        }
+        else
+        {
+            if (states2[1].opcode == "1101111" || states2[1].opcode == "1100011")
+            {
+                // Flush
+                if (states2[1].next_pc == states2[2].pc)
+                {
+                    states2.push_back(State(states2[3].next_pc));
+                    if (memory[states2[3].next_pc] == 0)
+                    {
+                        states2[4].is_dummy = true;
+                    }
+                }
+                else
+                {
+                    states2[2].is_dummy = true;
+                    states2[3].is_dummy = true;
+                    states2.push_back(State(states2[1].next_pc));
+                }
+            }
+            else if ((states2[1].opcode == "0110011" || states2[1].opcode == "0010011") && states2[1].latency > 0 && !states2[1].is_dummy)
+            {
+                states2 = {states2[0], State(0), states2[1], oldstates2[3], oldstates2[4]};
+                states2[4].pc = states2[3].next_pc;
+                states2[1].is_dummy = true;
+            }
+            else if (states2[3].is_dummy)
+            {
+                states2.push_back(State(0));
+                states2[4].is_dummy = true;
+            }
+            else
+            {
+                states2.push_back(State(states2[3].next_pc));
+                if (memory[states2[3].next_pc] == 0)
+                {
+                    states2[4].is_dummy = true;
+                }
+            }
+            /*
+                Exit condition
+            */
+            all_dummy1 = true;
+            for (auto i : states1)
+            {
+                if (!i.is_dummy)
+                {
+                    all_dummy1 = false;
+                }
+            }
+            all_dummy2 = true;
+            for (auto i : states2)
+            {
+                if (!i.is_dummy)
+                {
+                    all_dummy2 = false;
+                }
+            }
+        }
+        cores[1].savereg(1);
     }
-    std::ofstream Stats("data/stats.txt");
-    Stats << instruction_count_0 << std::endl;
-    Stats << instruction_count_1 << std::endl;
-    Stats << hazard_count_0 << std::endl;
-    Stats << hazard_count_1 << std::endl;
-    Stats << clock_0 << std::endl;
-    Stats << clock_1 << std::endl;
-
-    std::ofstream MemFile("data/memory_after.txt");
-
-    for (int i = 0; i < 1024; i++)
+    while (!all_dummy1)
     {
-        MemFile << i << "," << memory[i] << std::endl;
+        write_pipeline_file(0, states1);
+
+        int hazard_count1 = 0;
+        bool if_stall_1 = false;
+        int stall_pos_1 = 2;
+        hazardDetector.hazard_with_forwarding(states1, hazard_count1, if_stall_1, stall_pos_1);
+        hazard_count_0 += hazard_count1;
+
+        std::vector<State> oldstates1 = states1;
+
+        evaluate(states1, 0, latencies);
+
+        if (if_stall_1)
+        {
+            if (stall_pos_1 == 0)
+            {
+                states1 = {states1[0], State(0), oldstates1[2], oldstates1[3], oldstates1[4]};
+                states1[4].pc = states1[3].next_pc;
+                states1[1].is_dummy = true;
+            }
+            else if (stall_pos_1 == 1)
+            {
+                states1 = {states1[0], states1[1], State(0), oldstates1[3], oldstates1[4]};
+                states1[4].pc = states1[3].next_pc;
+                states1[2].is_dummy = true;
+            }
+        }
+        else
+        {
+            if (states1[1].opcode == "1101111" || states1[1].opcode == "1100011")
+            {
+                // Flush
+                if (states1[1].next_pc == states1[2].pc)
+                {
+                    states1.push_back(State(states1[3].next_pc));
+                    if (memory[states1[3].next_pc] == 0)
+                    {
+                        states1[4].is_dummy = true;
+                    }
+                }
+                else
+                {
+                    states1[2].is_dummy = true;
+                    states1[3].is_dummy = true;
+                    states1.push_back(State(states1[1].next_pc));
+                }
+            }
+            else if ((states1[1].opcode == "0110011" || states1[1].opcode == "0010011") && states1[1].latency > 0 && !states1[1].is_dummy)
+            {
+                states1 = {states1[0], State(0), states1[1], oldstates1[3], oldstates1[4]};
+                states1[4].pc = states1[3].next_pc;
+                states1[1].is_dummy = true;
+            }
+            else if (states1[3].is_dummy)
+            {
+                states1.push_back(State(0));
+                states1[4].is_dummy = true;
+            }
+            else
+            {
+                states1.push_back(State(states1[3].next_pc));
+                if (memory[states1[3].next_pc] == 0)
+                {
+                    states1[4].is_dummy = true;
+                }
+            }
+            all_dummy1 = true;
+            for (auto i : states1)
+            {
+                if (!i.is_dummy)
+                {
+                    all_dummy1 = false;
+                }
+            }
+        }
+        cores[0].savereg(0);
     }
-    MemFile.close();
+    while (!all_dummy2)
+    {
+        write_pipeline_file(1, states2);
+
+        int hazard_count2 = 0;
+        bool if_stall_2 = false;
+        int stall_pos_2 = 2;
+        hazardDetector.hazard_with_forwarding(states2, hazard_count2, if_stall_2, stall_pos_2);
+        hazard_count_1 += hazard_count2;
+
+        std::vector<State> oldstates2 = states2;
+
+        evaluate(states2, 1, latencies);
+
+        if (if_stall_2)
+        {
+            if (stall_pos_2 == 0)
+            {
+                states2 = {states2[0], State(0), oldstates2[2], oldstates2[3], oldstates2[4]};
+                states2[4].pc = states2[3].next_pc;
+                states2[1].is_dummy = true;
+            }
+            else if (stall_pos_2 == 1)
+            {
+                states2 = {states2[0], states2[1], State(0), oldstates2[3], oldstates2[4]};
+                states2[4].pc = states2[3].next_pc;
+                states2[2].is_dummy = true;
+            }
+        }
+        else
+        {
+            if (states2[1].opcode == "1101111" || states2[1].opcode == "1100011")
+            {
+                // Flush
+                if (states2[1].next_pc == states2[2].pc)
+                {
+                    states2.push_back(State(states2[3].next_pc));
+                    if (memory[states2[3].next_pc] == 0)
+                    {
+                        states2[4].is_dummy = true;
+                    }
+                }
+                else
+                {
+                    states2[2].is_dummy = true;
+                    states2[3].is_dummy = true;
+                    states2.push_back(State(states2[1].next_pc));
+                }
+            }
+            else if ((states2[1].opcode == "0110011" || states2[1].opcode == "0010011") && states2[1].latency > 0 && !states2[1].is_dummy)
+            {
+                states2 = {states2[0], State(0), states2[1], oldstates2[3], oldstates2[4]};
+                states2[4].pc = states2[3].next_pc;
+                states2[1].is_dummy = true;
+            }
+            else if (states2[3].is_dummy)
+            {
+                states2.push_back(State(0));
+                states2[4].is_dummy = true;
+            }
+            else
+            {
+                states2.push_back(State(states2[3].next_pc));
+                if (memory[states2[3].next_pc] == 0)
+                {
+                    states2[4].is_dummy = true;
+                }
+                if (memory[states2[3].next_pc] == 0)
+                {
+                    states2[4].is_dummy = true;
+                }
+            }
+            all_dummy2 = true;
+            for (auto i : states2)
+            {
+                if (!i.is_dummy)
+                {
+                    all_dummy2 = false;
+                }
+            }
+        }
+        cores[1].savereg(1);
+    }
+    save_stats();
 }

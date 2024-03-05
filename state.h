@@ -1,5 +1,8 @@
 #include <string>
 #include <climits>
+/*
+    Every Instruction is an object of the state class.
+*/
 class State
 {
 public:
@@ -9,8 +12,8 @@ public:
     std::string instruction;
     int rs1;
     int rs2;
-    long operand1;
-    long operand2;
+    int operand1;
+    int operand2;
     bool is_operand1;
     bool is_operand2;
     int temp_reg;

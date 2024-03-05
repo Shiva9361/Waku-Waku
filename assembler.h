@@ -51,38 +51,6 @@ Assembler::Assembler()
     lookup_table["x29"] = "11101";
     lookup_table["x30"] = "11110";
     lookup_table["x31"] = "11111";
-    lookup_table["x0\r"] = "00000";
-    lookup_table["x1\r"] = "00001";
-    lookup_table["x2\r"] = "00010";
-    lookup_table["x3\r"] = "00011";
-    lookup_table["x4\r"] = "00100";
-    lookup_table["x5\r"] = "00101";
-    lookup_table["x6\r"] = "00110";
-    lookup_table["x7\r"] = "00111";
-    lookup_table["x8\r"] = "01000";
-    lookup_table["x9\r"] = "01001";
-    lookup_table["x10\r"] = "01010";
-    lookup_table["x11\r"] = "01011";
-    lookup_table["x12\r"] = "01100";
-    lookup_table["x13\r"] = "01101";
-    lookup_table["x14\r"] = "01110";
-    lookup_table["x15\r"] = "01111";
-    lookup_table["x16\r"] = "10000";
-    lookup_table["x17\r"] = "10001";
-    lookup_table["x18\r"] = "10010";
-    lookup_table["x19\r"] = "10011";
-    lookup_table["x20\r"] = "10100";
-    lookup_table["x21\r"] = "10101";
-    lookup_table["x22\r"] = "10110";
-    lookup_table["x23\r"] = "10111";
-    lookup_table["x24\r"] = "11000";
-    lookup_table["x25\r"] = "11001";
-    lookup_table["x26\r"] = "11010";
-    lookup_table["x27\r"] = "11011";
-    lookup_table["x28\r"] = "11100";
-    lookup_table["x29\r"] = "11101";
-    lookup_table["x30\r"] = "11110";
-    lookup_table["x31\r"] = "11111";
 }
 void Assembler::display(std::string file)
 {
@@ -119,21 +87,8 @@ std::pair<std::vector<int>, std::vector<int>> Assembler::assemble(std::string fi
         {
             tokens.push_back(token);
         }
-        if (tokens[0][tokens[0].length() - 1] == '\r')
-        {
-            if (tokens[0][tokens[0].length() - 2] == ':')
-            {
-                if (tokens.size() > 3)
-                {
-                    labels[tokens[0].substr(0, tokens[0].length() - 1)] = lc; // offset for same line
-                }
-                else
-                {
-                    labels[tokens[0].substr(0, tokens[0].length() - 1)] = lc + 1;
-                }
-            }
-        }
-        else if (tokens[0][tokens[0].length() - 1] == ':')
+
+        if (tokens[0][tokens[0].length() - 1] == ':')
         {
             if (tokens.size() > 3)
             {
@@ -271,11 +226,7 @@ std::pair<std::vector<int>, std::vector<int>> Assembler::assemble(std::string fi
             {
                 sub_tokens.push_back(token);
             }
-            std::string rs1 = lookup_table[sub_tokens[1].substr(0, (sub_tokens[1].length() - 1))]; // why -2? fing \r
-            if (sub_tokens[1][(sub_tokens[1].length() - 1)] == '\r')
-            {
-                std::string rs1 = lookup_table[sub_tokens[1].substr(0, (sub_tokens[1].length() - 2))];
-            }
+            std::string rs1 = lookup_table[sub_tokens[1].substr(0, (sub_tokens[1].length() - 1))];
             std::bitset<12> bin_imm(std::stoi(sub_tokens[0], nullptr, 10));
             std::string imm = bin_imm.to_string();
             std::string instruction = imm + rs1 + func3 + rd + opcode;
@@ -294,10 +245,6 @@ std::pair<std::vector<int>, std::vector<int>> Assembler::assemble(std::string fi
                 sub_tokens.push_back(token);
             }
             std::string rs2 = lookup_table[sub_tokens[1].substr(0, (sub_tokens[1].length() - 1))];
-            if (sub_tokens[1][(sub_tokens[1].length() - 1)] == '\r')
-            {
-                rs2 = lookup_table[sub_tokens[1].substr(0, (sub_tokens[1].length() - 2))];
-            }
             std::bitset<12> bin_imm(std::stoi(sub_tokens[0], nullptr, 10));
             std::string imm = bin_imm.to_string();
             std::string imm2 = imm.substr(0, 7);
