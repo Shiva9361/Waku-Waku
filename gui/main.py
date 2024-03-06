@@ -108,8 +108,6 @@ def run():
         if request.form["pipeline"]:
             with open("data/core1_pipe.txt") as core_pipe_file:
                 states = core_pipe_file.read().replace("\r\n", "\n").split("\n")
-                template_state = ["write_back", "memory", "execute",
-                                  "decode/register_fetch", "instruction_fetch"]
                 for state in states:
                     state_list = state.split(" ")
                     state_dict = {}
@@ -117,15 +115,13 @@ def run():
                         state_list = state_list[:-1]
                     for _ in range(len(state_list)):
                         if state_list[_] == "0":
-                            state_dict[f"stage_{_}"] = "stall"
+                            state_dict[f"{_}"] = "stall"
                         else:
-                            state_dict[f"stage_{_}"] = template_state[_]
+                            state_dict[f"{_}"] = "done"
                     core0_pipeline_states.append(state_dict)
 
             with open("data/core0_pipe.txt") as core_pipe_file:
                 states = core_pipe_file.read().replace("\r\n", "\n").split("\n")
-                template_state = ["write_back", "memory", "execute",
-                                  "decode/register_fetch", "instruction_fetch"]
                 for state in states:
                     state_list = state.split(" ")
                     state_dict = {}
@@ -133,9 +129,9 @@ def run():
                         state_list = state_list[:-1]
                     for _ in range(len(state_list)):
                         if state_list[_] == "0":
-                            state_dict[f"stage_{_}"] = "stall"
+                            state_dict[f"{_}"] = "stall"
                         else:
-                            state_dict[f"stage_{_}"] = template_state[_]
+                            state_dict[f"{_}"] = "done"
                     core0_pipeline_states.append(state_dict)
 
             with open("data/stats.txt") as stats_file:
