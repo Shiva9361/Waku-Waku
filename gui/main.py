@@ -88,7 +88,7 @@ def run():
                 for data in content:
                     if data != "":
                         reg, value = data.split(" ")
-                        reg_dict[reg] = value
+                        reg_dict[reg[1:]] = value
 
                 core1_reg_states.append(reg_dict)
         with open("data/core0_reg.txt") as core_reg_file:
@@ -101,7 +101,7 @@ def run():
                 for data in content:
                     if data != "":
                         reg, value = data.split(" ")
-                        reg_dict[reg] = value
+                        reg_dict[reg[1:]] = value
 
                 core0_reg_states.append(reg_dict)
 

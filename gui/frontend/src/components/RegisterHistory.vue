@@ -1,10 +1,6 @@
 <template>
   <div>
-    <div v-for="(registers_content, key) in register_history" :key="key">
-      <div v-if="counter === 2 * key">
-        <Registers :registers_content="registers_content" />
-      </div>
-    </div>
+    <Registers :registers_content="register_history[counter]" />
   </div>
 </template>
 
@@ -16,6 +12,7 @@ export default {
   data() {
     return {
       counter: 0,
+      regitser_hist: [],
     };
   },
   props: {
@@ -24,11 +21,12 @@ export default {
   components: {
     Registers,
   },
+
   mounted() {
     // Simulating counter increment
     setInterval(() => {
       this.counter++;
-    }, 100);
+    }, 1000);
   },
 };
 </script>

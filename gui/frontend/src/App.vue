@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h1>Hello World</h1>
+    <h1>Waku-Waku Simulator</h1>
     <PipelineHistory :pipeline_history="pipeline_history" />
     <RegisterHistory :register_history="register_history" />
   </div>
