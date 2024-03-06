@@ -388,11 +388,18 @@ void Core::execute(State &state)
     {
         return;
     }
-
+    int temp_operand1, temp_operand2;
     if (state.is_operand1)
+    {
+        temp_operand1 = registers[state.rs1];
         registers[state.rs1] = state.operand1;
+    }
+
     if (state.is_operand2)
+    {
+        temp_operand2 = registers[state.rs2];
         registers[state.rs2] = state.operand2;
+    }
 
     if (state.opcode == "0110011")
     {
@@ -515,6 +522,16 @@ void Core::execute(State &state)
             }
         }
     }
+    if (state.is_operand1)
+    {
+        registers[state.rs1] = temp_operand1;
+    }
+
+    if (state.is_operand2)
+    {
+        registers[state.rs2] = temp_operand2;
+    }
+
     return;
 }
 void Core::mem(int *memory)
@@ -598,11 +615,22 @@ void Core::mem(State &state, int *memory)
 {
 
     if (state.is_dummy)
+    {
         return;
+    }
+
+    int temp_operand1, temp_operand2;
     if (state.is_operand1)
+    {
+        temp_operand1 = registers[state.rs1];
         registers[state.rs1] = state.operand1;
+    }
+
     if (state.is_operand2)
+    {
+        temp_operand2 = registers[state.rs2];
         registers[state.rs2] = state.operand2;
+    }
 
     if (state.opcode == "0000011")
     {
@@ -636,6 +664,16 @@ void Core::mem(State &state, int *memory)
     else if (state.opcode == "0010111")
     {
         state.temp_reg = (dataloc + state.imm) * 4;
+    }
+
+    if (state.is_operand1)
+    {
+        registers[state.rs1] = temp_operand1;
+    }
+
+    if (state.is_operand2)
+    {
+        registers[state.rs2] = temp_operand2;
     }
 }
 
