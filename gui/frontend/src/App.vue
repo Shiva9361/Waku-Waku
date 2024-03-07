@@ -26,7 +26,7 @@ export default {
     async fetchPipelineHistory() {
       const res = await fetch("http://localhost:5000/core/0/pipe");
       const data = await res.json();
-      return data;
+      return data, data;
     },
     async fetchRegisterHistory() {
       const res = await fetch("http://localhost:5000/core/0/reg");

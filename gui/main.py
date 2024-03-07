@@ -34,8 +34,8 @@ def run():
     core0_reg_states = []
     core1_pipeline_states = []
     core0_pipeline_states = []
-    core0_stats = []
-    core1_stats = []
+    core0_stats = {}
+    core1_stats = {}
 
     if request.method == "POST":
         """
@@ -138,10 +138,10 @@ def run():
                 stats = stats_file.read().replace("\r\n", "\n").split("\n")
                 if stats[-1] == "":
                     stats = stats[:-1]
-                core0_stats.extend([{"ic": stats[0]}, {"hc": stats[2]}, {"clk": stats[4]}, {
-                                   "ipc": round(int(stats[0])/int(stats[4]), 3)}])
-                core1_stats.extend([{"ic": stats[1]}, {"hc": stats[3]}, {"clk": stats[5]}, {
-                                   "ipc": round(int(stats[1])/int(stats[5]), 3)}])
+                core0_stats = {"ic": stats[0], "hc": stats[2], "clk": stats[4],
+                               "ipc": round(int(stats[0])/int(stats[4]), 3)}
+                core1_stats = {"ic": stats[1], "hc": stats[3], "clk": stats[5],
+                               "ipc": round(int(stats[1])/int(stats[5]), 3)}
 
     return {"message": "Done"}
 
