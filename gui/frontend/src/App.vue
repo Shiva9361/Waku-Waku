@@ -1,8 +1,11 @@
 <template>
-  <div>
+  <div class="root">
     <h1>Waku-Waku Simulator</h1>
-    <PipelineHistory :pipeline_history="pipeline_history" />
-    <RegisterHistory :register_history="register_history" />
+    <div class="content">
+      <PipelineHistory :pipeline_history="pipeline_history" />
+      <RegisterHistory :register_history="register_history" />
+    </div>
+    <textarea class="text" rows="10" cols="10"> </textarea>
   </div>
 </template>
 
@@ -49,5 +52,14 @@ export default {
 }
 h1 {
   text-align: center;
+}
+.text {
+  margin-left: 30px;
+  width: 500px;
+  height: 500px;
+  display: inline-block;
+}
+.content {
+  display: inline-block;
 }
 </style>
