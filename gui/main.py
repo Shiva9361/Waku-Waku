@@ -53,19 +53,27 @@ def run():
             os.remove("data/core0_pipe.txt")
 
         instruction = []
+        file0 = "codes/selection_sort.s"
+        file1 = "codes/bubble_sort.s"
+        if request.form["code0"]:
+            content = request.form["code0"]
+            content = content.replace("\r\n", "\n")
+            with open("codes/slot0.s", "w") as slot0_file:
+                slot0_file.write(content)
+            file0 = "codes/slot0.s"
+
         if request.form["pipeline"] == "true":
             if request.form["forward"] == "true":
-                instruction = ["./a.out", "codes/selection_sort.s",
-                               "codes/bubble_sort.s", "true", "true"]
+                instruction = ["./a.out", file0,
+                               file1, "true", "true"]
             else:
-                instruction = ["./a.out", "codes/selection_sort.s",
-                               "codes/bubble_sort.s", "true", "false"]
+                instruction = ["./a.out", file0,
+                               file1, "true", "false"]
         else:
-            instruction = ["./a.out", "codes/selection_sort.s",
-                           "codes/bubble_sort.s", "false", "false"]
+            instruction = ["./a.out", file0,
+                           file1, "false", "false"]
 
         process = Popen(instruction, shell=False, stdout=PIPE, stdin=PIPE)
-
         input = f"{request.form['addi']} {request.form['add']} {request.form['div']} {request.form['mul']} {request.form['sub']}"
 
         stdout, stderr = process.communicate(input=str.encode(input))
@@ -82,6 +90,8 @@ def run():
             reg_states = core_reg_file.read()
             reg_states.replace("\r\n", "\n")
             reg_states = reg_states.split("\n")
+            if reg_states[-1] == "":
+                reg_states = reg_states[:-1]
             for state in reg_states:
                 reg_dict = {}
                 content = state.split("\t")
@@ -95,6 +105,8 @@ def run():
             reg_states = core_reg_file.read()
             reg_states.replace("\r\n", "\n")
             reg_states = reg_states.split("\n")
+            if reg_states[-1] == "":
+                reg_states = reg_states[:-1]
             for state in reg_states:
                 reg_dict = {}
                 content = state.split("\t")
@@ -108,6 +120,8 @@ def run():
         if request.form["pipeline"]:
             with open("data/core1_pipe.txt") as core_pipe_file:
                 states = core_pipe_file.read().replace("\r\n", "\n").split("\n")
+                if states[-1] == "":
+                    states = states[:-1]
                 for state in states:
                     state_list = state.split(" ")
                     state_dict = {}
@@ -118,10 +132,12 @@ def run():
                             state_dict[f"{_}"] = "stall"
                         else:
                             state_dict[f"{_}"] = "done"
-                    core0_pipeline_states.append(state_dict)
+                    core1_pipeline_states.append(state_dict)
 
             with open("data/core0_pipe.txt") as core_pipe_file:
                 states = core_pipe_file.read().replace("\r\n", "\n").split("\n")
+                if states[-1] == "":
+                    states = states[:-1]
                 for state in states:
                     state_list = state.split(" ")
                     state_dict = {}

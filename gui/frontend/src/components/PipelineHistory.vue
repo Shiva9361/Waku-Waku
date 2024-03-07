@@ -9,22 +9,12 @@ import Pipeline from "./Pipeline.vue";
 
 export default {
   name: "PipelineHistory",
-  data() {
-    return {
-      counter: 0,
-    };
-  },
   props: {
     pipeline_history: Array,
+    counter: Number,
   },
   components: {
     Pipeline,
-  },
-  mounted() {
-    // Simulating counter increment
-    setInterval(() => {
-      this.counter++;
-    }, 1000);
   },
 };
 </script>
