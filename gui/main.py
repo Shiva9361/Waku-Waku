@@ -34,8 +34,8 @@ def run():
     core0_reg_states = []
     core1_pipeline_states = []
     core0_pipeline_states = []
-    core0_stats = []
-    core1_stats = []
+    core0_stats = {}
+    core1_stats = {}
 
     if request.method == "POST":
         """
@@ -108,8 +108,6 @@ def run():
         if request.form["pipeline"]:
             with open("data/core1_pipe.txt") as core_pipe_file:
                 states = core_pipe_file.read().replace("\r\n", "\n").split("\n")
-                template_state = ["write_back", "memory", "execute",
-                                  "decode/register_fetch", "instruction_fetch"]
                 for state in states:
                     state_list = state.split(" ")
                     state_dict = {}
@@ -117,15 +115,13 @@ def run():
                         state_list = state_list[:-1]
                     for _ in range(len(state_list)):
                         if state_list[_] == "0":
-                            state_dict[f"stage_{_}"] = "stall"
+                            state_dict[f"{_}"] = "stall"
                         else:
-                            state_dict[f"stage_{_}"] = template_state[_]
+                            state_dict[f"{_}"] = "done"
                     core0_pipeline_states.append(state_dict)
 
             with open("data/core0_pipe.txt") as core_pipe_file:
                 states = core_pipe_file.read().replace("\r\n", "\n").split("\n")
-                template_state = ["write_back", "memory", "execute",
-                                  "decode/register_fetch", "instruction_fetch"]
                 for state in states:
                     state_list = state.split(" ")
                     state_dict = {}
@@ -133,19 +129,19 @@ def run():
                         state_list = state_list[:-1]
                     for _ in range(len(state_list)):
                         if state_list[_] == "0":
-                            state_dict[f"stage_{_}"] = "stall"
+                            state_dict[f"{_}"] = "stall"
                         else:
-                            state_dict[f"stage_{_}"] = template_state[_]
+                            state_dict[f"{_}"] = "done"
                     core0_pipeline_states.append(state_dict)
 
             with open("data/stats.txt") as stats_file:
                 stats = stats_file.read().replace("\r\n", "\n").split("\n")
                 if stats[-1] == "":
                     stats = stats[:-1]
-                core0_stats.extend([{"ic": stats[0]}, {"hc": stats[2]}, {"clk": stats[4]}, {
-                                   "ipc": round(int(stats[0])/int(stats[4]), 3)}])
-                core1_stats.extend([{"ic": stats[1]}, {"hc": stats[3]}, {"clk": stats[5]}, {
-                                   "ipc": round(int(stats[1])/int(stats[5]), 3)}])
+                core0_stats = {"ic": stats[0], "hc": stats[2], "clk": stats[4],
+                               "ipc": round(int(stats[0])/int(stats[4]), 3)}
+                core1_stats = {"ic": stats[1], "hc": stats[3], "clk": stats[5],
+                               "ipc": round(int(stats[1])/int(stats[5]), 3)}
 
     return {"message": "Done"}
 
