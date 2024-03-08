@@ -57,7 +57,7 @@ def run():
         file1 = "codes/bubble_sort.s"
         if request.form["code0"]:
             content = request.form["code0"]
-            content = content.replace("\r\n", "\n")
+            content = content.replace("\r\n", "\n").replace(","," ")
             with open("codes/slot0.s", "w") as slot0_file:
                 slot0_file.write(content)
             file0 = "codes/slot0.s"

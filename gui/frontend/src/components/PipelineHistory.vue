@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="container">
     <Pipeline :pipeline_content="pipeline_history[counter]" />
   </div>
 </template>
