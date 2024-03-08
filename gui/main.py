@@ -128,10 +128,10 @@ def run():
                     if (len(state_list) > 5):
                         state_list = state_list[:-1]
                     for _ in range(len(state_list)):
-                        if state_list[_] == "0":
+                        if state_list[_] == "-1":
                             state_dict[f"{_}"] = "stall"
                         else:
-                            state_dict[f"{_}"] = "done"
+                            state_dict[f"{_}"] = state_list[_]
                     core1_pipeline_states.append(state_dict)
 
             with open("data/core0_pipe.txt") as core_pipe_file:
@@ -144,10 +144,10 @@ def run():
                     if (len(state_list) > 5):
                         state_list = state_list[:-1]
                     for _ in range(len(state_list)):
-                        if state_list[_] == "0":
+                        if state_list[_] == "-1":
                             state_dict[f"{_}"] = "stall"
                         else:
-                            state_dict[f"{_}"] = "done"
+                            state_dict[f"{_}"] = state_list[_]
                     core0_pipeline_states.append(state_dict)
 
             with open("data/stats.txt") as stats_file:

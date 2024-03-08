@@ -1,5 +1,45 @@
 # Waku-Waku
 
+## 8/03/2024 2:00pm
+
+After spending hours on trying to do a post request from frontend to backend, finally found the bug and fixed it.
+Now post requests are working and we can continue adding all features.
+
+## 6/03/2024 10:00pm
+
+Started installing vue pacakages, although vue2 reached eol, we decided to go with it as there weren't too many places
+to go to for bugs in vue3. Doing work after NSO does seem very difficult.
+
+## 4/03/2024 9:00 pm
+
+Added latency support for arithmetic instructions.
+We decided to screw more with our sanity by adding a gui to this simulator.
+After going through pages of horror stories decided that we better not write a webserver in c++
+After some thoughts, came up with quite a convoluted way of setting up a web app.
+Basically python with Flask framework will be the backend, Vue.js will be front-end
+Communication between frontend and backend will be using CRUD, python can then feed data into the
+cpp binary execute it, return data which can then be displayed in the frontend in any way and any speed we want.
+
+Although this might sound stupid, the alternatives were way too horrifying with only confusing documentation to
+go off of.
+
+## 4/03/2024 2:15 am
+
+So we spent the whole day fixing stupid bugs that made us question overselves as to why we picked c++ instead of
+warm and comforting python but I digress, Anyway data forwarding seems to be done and bubble / selection sorts
+worked.. so, well the time we spent was not completely wasted ig. We thought of using btb and doing good predictions
+called it of after spending too much time with bugs and just added a lame static predictor.
+
+## 2/03/2024 2:00 am
+
+So we started with pipelining. Fist we decided to pipeline only the 1st core. In order to simulate a pipeline,
+we decided to have a execute function that takes a vector of 5 instructions and does the different stages
+of execution on these instructions inorder to facilitate that we created a new class which was initially known as
+InstructionState but then due to the verbose nature shortened to just state. We identified that for RAW hazard
+we just need to stall the decode stage. In order to simulate stall, we decided to add a bool called is_dummy which
+when set will not do anything with the instruction.
+Stalling will happen as long as the dependent instruction is not written to memory.
+
 ## 25/02/2024 6:30 pm
 
 Finally did some fixing, Now selection sort works.. Hurray!!. As the gui is still under development,

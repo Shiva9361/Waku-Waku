@@ -111,9 +111,9 @@ void Processor::write_pipeline_file(int core, std::vector<State> states)
     for (auto i : states)
     {
         if (i.is_dummy)
-            pipefile << "0 ";
+            pipefile << "-1 ";
         else
-            pipefile << 1 << " ";
+            pipefile << i.pc << " ";
     }
     pipefile << std::endl;
     pipefile.close();
