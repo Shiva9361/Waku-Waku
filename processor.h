@@ -280,6 +280,12 @@ void Processor::run_pipelined_wo_forwarding(std::map<std::string, int> latencies
             states1[3].is_dummy = true;
             states1.push_back(State(states1[1].next_pc));
         }
+        else if ((states1[1].opcode == "0110011" || states1[1].opcode == "0010011") && states1[1].latency > 0 && !states1[1].is_dummy)
+        {
+            states1 = {states1[0], State(0), states1[1], oldstates1[3], oldstates1[4]};
+            states1[4].pc = states1[3].next_pc;
+            states1[1].is_dummy = true;
+        }
         else if (hazard_count1 > 0)
         {
             states1 = {states1[0], states1[1], State(0), oldstates1[3], oldstates1[4]};
@@ -288,13 +294,8 @@ void Processor::run_pipelined_wo_forwarding(std::map<std::string, int> latencies
         }
         else
         {
-            if ((states1[1].opcode == "0110011" || states1[1].opcode == "0010011") && states1[1].latency > 0 && !states1[1].is_dummy)
-            {
-                states1 = {states1[0], State(0), states1[1], oldstates1[3], oldstates1[4]};
-                states1[4].pc = states1[3].next_pc;
-                states1[1].is_dummy = true;
-            }
-            else if (states1[3].is_dummy)
+
+            if (states1[3].is_dummy)
             {
                 states1.push_back(State(0));
                 states1[4].is_dummy = true;
@@ -330,6 +331,12 @@ void Processor::run_pipelined_wo_forwarding(std::map<std::string, int> latencies
             states2[3].is_dummy = true;
             states2.push_back(State(states2[1].next_pc));
         }
+        else if ((states2[1].opcode == "0110011" || states2[1].opcode == "0010011") && states2[1].latency > 0 && !states2[1].is_dummy)
+        {
+            states2 = {states2[0], State(0), states2[1], oldstates2[3], oldstates2[4]};
+            states2[4].pc = states2[3].next_pc;
+            states2[1].is_dummy = true;
+        }
         else if (hazard_count2 > 0)
         {
             states2 = {states2[0], states2[1], State(0), oldstates2[3], oldstates2[4]};
@@ -338,13 +345,8 @@ void Processor::run_pipelined_wo_forwarding(std::map<std::string, int> latencies
         }
         else
         {
-            if ((states2[1].opcode == "0110011" || states2[1].opcode == "0010011") && states2[1].latency > 0 && !states2[1].is_dummy)
-            {
-                states2 = {states2[0], State(0), states2[1], oldstates2[3], oldstates2[4]};
-                states2[4].pc = states2[3].next_pc;
-                states2[1].is_dummy = true;
-            }
-            else if (states2[3].is_dummy)
+
+            if (states2[3].is_dummy)
             {
                 states2.push_back(State(0));
                 states2[4].is_dummy = true;
@@ -391,6 +393,12 @@ void Processor::run_pipelined_wo_forwarding(std::map<std::string, int> latencies
             states1[3].is_dummy = true;
             states1.push_back(State(states1[1].next_pc));
         }
+        else if ((states1[1].opcode == "0110011" || states1[1].opcode == "0010011") && states1[1].latency > 0 && !states1[1].is_dummy)
+        {
+            states1 = {states1[0], State(0), states1[1], oldstates1[3], oldstates1[4]};
+            states1[4].pc = states1[3].next_pc;
+            states1[1].is_dummy = true;
+        }
         else if (hazard_count1 > 0)
         {
             states1 = {states1[0], states1[1], State(0), oldstates1[3], oldstates1[4]};
@@ -399,13 +407,8 @@ void Processor::run_pipelined_wo_forwarding(std::map<std::string, int> latencies
         }
         else
         {
-            if ((states1[1].opcode == "0110011" || states1[1].opcode == "0010011") && states1[1].latency > 0 && !states1[1].is_dummy)
-            {
-                states1 = {states1[0], State(0), states1[1], oldstates1[3], oldstates1[4]};
-                states1[4].pc = states1[3].next_pc;
-                states1[1].is_dummy = true;
-            }
-            else if (states1[3].is_dummy)
+
+            if (states1[3].is_dummy)
             {
                 states1.push_back(State(0));
                 states1[4].is_dummy = true;
@@ -451,6 +454,12 @@ void Processor::run_pipelined_wo_forwarding(std::map<std::string, int> latencies
             states2[3].is_dummy = true;
             states2.push_back(State(states2[1].next_pc));
         }
+        else if ((states2[1].opcode == "0110011" || states2[1].opcode == "0010011") && states2[1].latency > 0 && !states2[1].is_dummy)
+        {
+            states2 = {states2[0], State(0), states2[1], oldstates2[3], oldstates2[4]};
+            states2[4].pc = states2[3].next_pc;
+            states2[1].is_dummy = true;
+        }
         else if (hazard_count2 > 0)
         {
             states2 = {states2[0], states2[1], State(0), oldstates2[3], oldstates2[4]};
@@ -459,13 +468,8 @@ void Processor::run_pipelined_wo_forwarding(std::map<std::string, int> latencies
         }
         else
         {
-            if ((states2[1].opcode == "0110011" || states2[1].opcode == "0010011") && states2[1].latency > 0 && !states2[1].is_dummy)
-            {
-                states2 = {states2[0], State(0), states2[1], oldstates2[3], oldstates2[4]};
-                states2[4].pc = states2[3].next_pc;
-                states2[1].is_dummy = true;
-            }
-            else if (states2[3].is_dummy)
+
+            if (states2[3].is_dummy)
             {
                 states2.push_back(State(0));
                 states2[4].is_dummy = true;
