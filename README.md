@@ -1,5 +1,9 @@
 # Waku-Waku
 
+## 10/03/2024 12:45 am
+
+We spent a lot of time on the GUI, mostly done, will add remaining stuff after waking up.
+
 ## 8/03/2024 2:00pm
 
 After spending hours on trying to do a post request from frontend to backend, finally found the bug and fixed it.
