@@ -226,7 +226,6 @@ void Processor::run_unpipelined(int instructions1_length, int instructions2_leng
         i = cores[0].execute();
         cores[0].mem(memory);
         cores[0].savereg(0);
-        cores[1].savereg(1);
         clock++;
     }
     while (j < instructions2_length)
@@ -235,7 +234,6 @@ void Processor::run_unpipelined(int instructions1_length, int instructions2_leng
         cores[1].decode();
         j = cores[1].execute() - 856;
         cores[1].mem(memory);
-        cores[0].savereg(0);
         cores[1].savereg(1);
         clock++;
     }

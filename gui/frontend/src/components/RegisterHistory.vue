@@ -1,5 +1,6 @@
 <template>
   <div>
+    <h2>Core {{ register_number }}</h2>
     <Registers :registers_content="register_history[counter]" />
   </div>
 </template>
@@ -12,6 +13,7 @@ export default {
   props: {
     register_history: Array,
     counter: Number,
+    register_number: Number,
   },
   components: {
     Registers,
