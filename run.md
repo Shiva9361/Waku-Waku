@@ -2,5 +2,8 @@
 
 ```
 python3 gui/main.py
-serve gui/frontend -s dist -p 8080
+```
+
+```
+serve -s gui/frontend/dist -p 8080
 ```
