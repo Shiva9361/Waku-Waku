@@ -30,7 +30,7 @@ export default {
   overflow: auto;
   height: 100px;
   border: 1px solid steelblue;
-  padding: 30px;
+  padding: 10px;
   border-radius: 5px;
 }
 </style>

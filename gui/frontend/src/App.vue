@@ -327,6 +327,8 @@ export default {
         this.memory_history = await this.fetchMemory();
         this.stats_0 = await this.fetchStats0();
         this.stats_1 = await this.fetchStats1();
+        this.display_stats_0 = false;
+        this.display_stats_1 = false;
         this.play_0 = true;
         this.play_1 = true;
         this.counter_0 = 0;

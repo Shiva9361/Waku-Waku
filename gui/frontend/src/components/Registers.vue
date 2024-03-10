@@ -24,6 +24,7 @@ export default {
 <style>
 .registers {
   width: 100%;
+  white-space: nowrap;
 }
 .register_key {
   margin: 1px 1px 0px 0px;
