@@ -1,11 +1,11 @@
 .data
-arr: .word 4 3 21 1 9 5 6 6 -2
+arr: .word 20 19 18 17 16 15 14 13 12 11 10 9 8 7 6 5 4 3 2 1
 ##
 .text
 la x5 arr
 add x6 x5 x0 # copy to go back for after iteration
-addi x7 x0 9 # x7 is decremented in each iteration
-addi x8 x0 8 # saves the length of array and is not modified
+addi x7 x0 20 # x7 is decremented in each iteration
+addi x8 x0 20 # saves the length of array and is not modified
 loop1:
 beq x0 x7 exit
 addi x7 x7 -1
