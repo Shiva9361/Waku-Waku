@@ -54,7 +54,7 @@ public:
     void fetch(int *memory, State &instruction);
     void decode();
     void decode(State &state);
-    int execute();
+    int execute(std::map<std::string, int> latencies, int &counter);
     void execute(State &instruction);
     void mem(int *memory);
     void mem(State &instruction, int *memory);
@@ -65,12 +65,6 @@ public:
 Core::Core(int pc, int dataloc)
 {
     registers[0] = 0; // x0 is hardwired to 0
-    // registers[2] = 2147483632; // Stack pointer
-    // registers[1] = 111;
-    // registers[5] = 84*4;
-    // // registers[3] = 268435456;  // Global Pointer
-    // registers[3] = 3;
-    // registers[17] = 8;
     this->pc = pc;
     this->pc_i = pc;
     this->dataloc = dataloc;
@@ -212,7 +206,7 @@ void Core::decode(State &state)
     }
 }
 
-int Core::execute()
+int Core::execute(std::map<std::string, int> latencies, int &counter)
 {
     if (opcode == "0110011" && rd != "00000")
     {
@@ -223,6 +217,7 @@ int Core::execute()
                       << "add" << std::endl;
 #endif
             registers[std::stoi(rd, nullptr, 2)] = registers[std::stoi(rs1, nullptr, 2)] + registers[std::stoi(rs2, nullptr, 2)];
+            counter += (latencies["add"] - 1);
         }
         else if (func3 == "000" && func7 == "0100000")
         {
@@ -231,6 +226,7 @@ int Core::execute()
                       << "sub" << std::endl;
 #endif
             registers[std::stoi(rd, nullptr, 2)] = registers[std::stoi(rs1, nullptr, 2)] - registers[std::stoi(rs2, nullptr, 2)];
+            counter += (latencies["sub"] - 1);
         }
         else if (func3 == "000" && func7 == "0000001")
         {
@@ -239,6 +235,7 @@ int Core::execute()
                       << "mul" << std::endl;
 #endif
             registers[std::stoi(rd, nullptr, 2)] = registers[std::stoi(rs1, nullptr, 2)] * registers[std::stoi(rs2, nullptr, 2)];
+            counter += (latencies["mul"] - 1);
         }
         else if (func3 == "100" && func7 == "0000001")
         {
@@ -247,6 +244,7 @@ int Core::execute()
                       << "div" << std::endl;
 #endif
             registers[std::stoi(rd, nullptr, 2)] = registers[std::stoi(rs1, nullptr, 2)] / registers[std::stoi(rs2, nullptr, 2)];
+            counter += (latencies["div"] - 1);
         }
 #ifdef PRINT
         std::cout << "RF: "
@@ -363,6 +361,7 @@ int Core::execute()
             if (rd != "00000")
             {
                 registers[std::stoi(rd, nullptr, 2)] = registers[std::stoi(rs1, nullptr, 2)] + bin_to_int(imm);
+                counter += (latencies["addi"] - 1);
             }
         }
 #ifdef PRINT

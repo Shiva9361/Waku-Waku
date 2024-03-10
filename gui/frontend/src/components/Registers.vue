@@ -1,9 +1,9 @@
 <template>
   <div class="registers">
-      <div v-for="(value, key) in registers_content" :key="key">
-        <div class="register_key">{{ key }}</div>
-        <div class="register_value">{{ value }}</div>
-      </div>
+    <div v-for="(value, key) in registers_content" :key="key">
+      <div class="register_key">{{ key }}</div>
+      <div class="register_value">{{ value }}</div>
+    </div>
   </div>
 </template>
 

@@ -9,7 +9,7 @@ CORS is required to interact with vue.js
 """
 CORS(app, resources={r"/*": {'origins': "*"}})
 
-memory_dict = {}
+memory_list = []
 core1_reg_states = []
 core0_reg_states = []
 
@@ -18,6 +18,11 @@ core0_pipeline_states = []
 
 core1_stats = []
 core0_stats = []
+
+
+def clear_mem():
+    global memory_list
+    memory_list = [{str(i): 0 for i in range(1024)}]
 
 
 def clear_cores_reg():
@@ -96,15 +101,26 @@ def clear_cores_reg():
     ]
 
 
-@app.route('/memory')
+@app.route('/mem')
 def memory():
-    global memory_dict
-    return memory_dict
+    global memory_list
+    return jsonify(memory_list)
+
+
+@app.route('/clear')
+def clear():
+    global core0_pipeline_states, core1_pipeline_states, core0_stats, core1_stats
+    core1_pipeline_states = []
+    core0_pipeline_states = []
+    core0_stats = {}
+    core1_stats = {}
+    clear_cores_reg()
+    return {"message": "done"}
 
 
 @app.route('/run', methods=["POST"])
 def run():
-    global memory_dict, core1_reg_states, core0_reg_states, core1_pipeline_states, core0_pipeline_states, core0_stats, core1_stats
+    global memory_list, core1_reg_states, core0_reg_states, core1_pipeline_states, core0_pipeline_states, core0_stats, core1_stats
 
     core1_reg_states = []
     core0_reg_states = []
@@ -112,6 +128,7 @@ def run():
     core0_pipeline_states = []
     core0_stats = {}
     core1_stats = {}
+    memory_list = []
 
     if request.method == "POST":
         try:
@@ -161,7 +178,15 @@ def run():
             input = f"{request.form['addi']} {request.form['add']} {request.form['div']} {request.form['mul']} {request.form['sub']}"
 
             stdout, stderr = process.communicate(input=str.encode(input))
-
+            memory_dict = {}
+            with open("data/memory_before.txt") as mem_file:
+                memory = mem_file.read()
+                memory.replace("\r\n", "\n")
+                memory = memory.split("\n")
+                memory_dict = {}
+                for i in memory[:-1]:
+                    memory_dict[int(i.split(",")[0])] = int(i.split(",")[1])
+                memory_list.append(memory_dict)
             with open("data/memory_after.txt") as mem_file:
                 memory = mem_file.read()
                 memory.replace("\r\n", "\n")
@@ -169,7 +194,7 @@ def run():
                 memory_dict = {}
                 for i in memory[:-1]:
                     memory_dict[int(i.split(",")[0])] = int(i.split(",")[1])
-
+                memory_list.append(memory_dict)
             with open("data/core1_reg.txt") as core_reg_file:
                 reg_states = core_reg_file.read()
                 reg_states.replace("\r\n", "\n")
@@ -285,4 +310,5 @@ def core1_stats_fun():
 
 if __name__ == "__main__":
     clear_cores_reg()
+    clear_mem()
     app.run(debug=True)

@@ -22,7 +22,7 @@ private:
 public:
     Processor(std::string file1, std::string file2, bool pipeline, bool forwarding, std::map<std::string, int> latencies);
     void evaluate(std::vector<State> &pipelined_instructions, int core, std::map<std::string, int> latencies);
-    void run_unpipelined(int instructions_1_length, int instructions_2_length);
+    void run_unpipelined(int instructions_1_length, int instructions_2_length, std::map<std::string, int> latencies);
     void run_pipelined_wo_forwarding(std::map<std::string, int> latencies);
     void run_pipelined_with_forwarding(std::map<std::string, int> latencies);
     void save_stats();
@@ -94,7 +94,7 @@ Processor::Processor(std::string file1, std::string file2, bool pipeline, bool f
     }
     else
     {
-        run_unpipelined(instructions1.size(), instructions2.size());
+        run_unpipelined(instructions1.size(), instructions2.size(), latencies);
     }
     save_mem();
 }
@@ -201,40 +201,76 @@ void Processor::evaluate(std::vector<State> &pipelined_instructions, int core, s
     }
 }
 
-void Processor::run_unpipelined(int instructions1_length, int instructions2_length)
+void Processor::run_unpipelined(int instructions1_length, int instructions2_length, std::map<std::string, int> latencies)
 {
 
     int i = 0, j = 0;
+    int counter_0, counter_1;
     while (i < instructions1_length && j < instructions2_length)
     {
+        counter_0 = 1;
+        counter_1 = 1;
         cores[0].fetch(memory);
-        cores[1].fetch(memory);
-        cores[0].decode();
-        cores[1].decode();
-        i = cores[0].execute();
-        j = cores[1].execute() - 856;
-        cores[0].mem(memory);
-        cores[1].mem(memory);
         cores[0].savereg(0);
+        cores[1].fetch(memory);
         cores[1].savereg(1);
+        cores[0].decode();
+        cores[0].savereg(0);
+        cores[1].decode();
+        cores[1].savereg(1);
+        i = cores[0].execute(latencies, counter_0);
+        j = cores[1].execute(latencies, counter_1) - 856;
+        cores[0].mem(memory);
+        cores[0].savereg(0);
+        cores[0].savereg(0);
+        cores[1].mem(memory);
+        cores[1].savereg(1);
+        cores[1].savereg(1);
+        while (counter_0--)
+        {
+            cores[0].savereg(0);
+        }
+        while (counter_1--)
+        {
+            cores[1].savereg(1);
+        }
+        instruction_count_0++;
+        instruction_count_1++;
         clock++;
     }
     while (i < instructions1_length)
     {
+
+        counter_0 = 1;
         cores[0].fetch(memory);
+        cores[0].savereg(0);
         cores[0].decode();
-        i = cores[0].execute();
+        cores[0].savereg(0);
+        i = cores[0].execute(latencies, counter_0);
         cores[0].mem(memory);
         cores[0].savereg(0);
+        cores[0].savereg(0);
+        while (counter_0--)
+        {
+            cores[0].savereg(0);
+        }
         clock++;
     }
     while (j < instructions2_length)
     {
+        counter_1 = 1;
         cores[1].fetch(memory);
+        cores[1].savereg(1);
         cores[1].decode();
-        j = cores[1].execute() - 856;
+        cores[1].savereg(1);
+        j = cores[1].execute(latencies, counter_1) - 856;
         cores[1].mem(memory);
         cores[1].savereg(1);
+        cores[1].savereg(1);
+        while (counter_1--)
+        {
+            cores[1].savereg(1);
+        }
         clock++;
     }
 }

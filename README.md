@@ -1,5 +1,11 @@
 # Waku-Waku
 
+## 10/03/2024 2:30 pm
+
+We successfully completed the work. As the project is not deployed, it takes a few extra steps to run it.
+first install the packages listed in requirements.md then run the frontend and backend servers seperately using the listed
+commands. commands are with respect to the root folder.
+
 ## 10/03/2024 12:45 am
 
 We spent a lot of time on the GUI, mostly done, will add remaining stuff after waking up.
