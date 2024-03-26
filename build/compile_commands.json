@@ -1,0 +1,7 @@
+[
+{
+  "directory": "/media/shiva/Shiv/Scripts/CO_Project/Waku-Waku-c/build",
+  "command": "/usr/bin/g++ -Dprocessor_EXPORTS -isystem /media/shiva/Shiv/Scripts/CO_Project/Waku-Waku-c/dependencies/pybind11/include -isystem /usr/include/python3.10 -g -fPIC -fvisibility=hidden -o CMakeFiles/processor.dir/src/simulator/processor.cpp.o -c /media/shiva/Shiv/Scripts/CO_Project/Waku-Waku-c/src/simulator/processor.cpp",
+  "file": "/media/shiva/Shiv/Scripts/CO_Project/Waku-Waku-c/src/simulator/processor.cpp"
+}
+]
