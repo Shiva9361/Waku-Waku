@@ -1,5 +1,17 @@
 # Waku-Waku
 
+## 26/03/2024 10:45 pm
+
+Soo, we still haven't started phase 3, youtube recomended me some videos related to pybind11, to import cpp to
+python, which got my atttention. As i have nothing to go after messing up test2, I dove into the rabbit hole,
+ended up adding pybind support and directly importing the processor into python.
+
+The problem with the gui was the use of global variables which would never work if we wanted to deploy this project,
+so I decided to add session management which was another rabbit-hole. CORS ended up creating soo much problem that at the
+end I just merged both the servers and removed cors altogether. So after a day gone, sessions are working fine now.
+
+Should start with phase 3 tomorrow after discussing with Sasaank.
+
 ## 10/03/2024 2:30 pm
 
 We successfully completed the work. As the project is not deployed, it takes a few extra steps to run it.
