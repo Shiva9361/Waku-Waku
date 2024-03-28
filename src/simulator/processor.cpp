@@ -1,7 +1,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <iostream>
-#include "core.h"
+#include "cache.h"
 #include "assembler.h"
 
 namespace py = pybind11;
@@ -10,6 +10,7 @@ class Processor
 private:
     int memory[1024] = {0};
     Core cores[2] = {Core(0, 84), Core(856, 943)}; // .text is of size 84 words
+    Cache cache;
     int clock_0;
     int clock_1;
     int clock;
@@ -189,19 +190,28 @@ void Processor::evaluate(std::vector<State> &pipelined_instructions, int core, s
         cores[core].writeback(pipelined_instructions[0], instruction_count_1);
     }
     // std::cout<<"did wb"<<std::endl;
-    cores[core].mem(pipelined_instructions[1], memory);
+    cores[core].mem(pipelined_instructions[1], memory, cache);
     // std::cout<<"did mem"<<std::endl;
     cores[core].execute(pipelined_instructions[2]);
     // std::cout<<"did exe"<<std::endl;
     cores[core].decode(pipelined_instructions[3]);
     // std::cout<<"did dec"<<std::endl;
-    cores[core].fetch(memory, pipelined_instructions[4]);
+    cores[core].fetch(memory, pipelined_instructions[4], cache);
     // std::cout<<"did fe"<<std::endl;
     pipelined_instructions.erase(pipelined_instructions.begin());
 
     /*
         Adding latencies
     */
+    if (pipelined_instructions[3].miss)
+    {
+        pipelined_instructions[3].latency = latencies["fmiss"];
+        pipelined_instructions[3].miss = false;
+    }
+    else
+    {
+        pipelined_instructions[3].latency = latencies["fhit"];
+    }
 
     if (pipelined_instructions[2].opcode == "0110011")
     {
@@ -353,15 +363,20 @@ void Processor::run_pipelined_wo_forwarding(std::map<std::string, int> latencies
         }
         else if ((states1[1].opcode == "0110011" || states1[1].opcode == "0010011") && states1[1].latency > 0 && !states1[1].is_dummy)
         {
-            states1 = {states1[0], State(0), states1[1], oldstates1[3], oldstates1[4]};
+            states1 = {states1[0], State(0), states1[1], oldstates1[3], states1[3]};
             states1[4].pc = states1[3].next_pc;
             states1[1].is_dummy = true;
         }
         else if (hazard_count1 > 0)
         {
-            states1 = {states1[0], states1[1], State(0), oldstates1[3], oldstates1[4]};
+            states1 = {states1[0], states1[1], State(0), oldstates1[3], states1[3]};
             states1[4].pc = states1[3].next_pc;
             states1[2].is_dummy = true;
+        }
+        else if (states1[3].latency > 0)
+        {
+            states1 = {states1[0], states1[1], states1[2], State(0), states1[3]};
+            states1[3].is_dummy = true;
         }
         else
         {
@@ -404,15 +419,20 @@ void Processor::run_pipelined_wo_forwarding(std::map<std::string, int> latencies
         }
         else if ((states2[1].opcode == "0110011" || states2[1].opcode == "0010011") && states2[1].latency > 0 && !states2[1].is_dummy)
         {
-            states2 = {states2[0], State(0), states2[1], oldstates2[3], oldstates2[4]};
+            states2 = {states2[0], State(0), states2[1], oldstates2[3], states2[3]};
             states2[4].pc = states2[3].next_pc;
             states2[1].is_dummy = true;
         }
         else if (hazard_count2 > 0)
         {
-            states2 = {states2[0], states2[1], State(0), oldstates2[3], oldstates2[4]};
+            states2 = {states2[0], states2[1], State(0), oldstates2[3], states2[3]};
             states2[4].pc = states2[3].next_pc;
             states2[2].is_dummy = true;
+        }
+        else if (states2[3].latency > 0)
+        {
+            states2 = {states2[0], states2[1], states2[2], State(0), states2[3]};
+            states2[3].is_dummy = true;
         }
         else
         {
@@ -466,15 +486,20 @@ void Processor::run_pipelined_wo_forwarding(std::map<std::string, int> latencies
         }
         else if ((states1[1].opcode == "0110011" || states1[1].opcode == "0010011") && states1[1].latency > 0 && !states1[1].is_dummy)
         {
-            states1 = {states1[0], State(0), states1[1], oldstates1[3], oldstates1[4]};
+            states1 = {states1[0], State(0), states1[1], oldstates1[3], states1[3]};
             states1[4].pc = states1[3].next_pc;
             states1[1].is_dummy = true;
         }
         else if (hazard_count1 > 0)
         {
-            states1 = {states1[0], states1[1], State(0), oldstates1[3], oldstates1[4]};
+            states1 = {states1[0], states1[1], State(0), oldstates1[3], states1[3]};
             states1[4].pc = states1[3].next_pc;
             states1[2].is_dummy = true;
+        }
+        else if (states1[3].latency > 0)
+        {
+            states1 = {states1[0], states1[1], states1[2], State(0), states1[3]};
+            states1[3].is_dummy = true;
         }
         else
         {
@@ -527,15 +552,20 @@ void Processor::run_pipelined_wo_forwarding(std::map<std::string, int> latencies
         }
         else if ((states2[1].opcode == "0110011" || states2[1].opcode == "0010011") && states2[1].latency > 0 && !states2[1].is_dummy)
         {
-            states2 = {states2[0], State(0), states2[1], oldstates2[3], oldstates2[4]};
+            states2 = {states2[0], State(0), states2[1], oldstates2[3], states2[3]};
             states2[4].pc = states2[3].next_pc;
             states2[1].is_dummy = true;
         }
         else if (hazard_count2 > 0)
         {
-            states2 = {states2[0], states2[1], State(0), oldstates2[3], oldstates2[4]};
+            states2 = {states2[0], states2[1], State(0), oldstates2[3], states2[3]};
             states2[4].pc = states2[3].next_pc;
             states2[2].is_dummy = true;
+        }
+        else if (states2[3].latency > 0)
+        {
+            states2 = {states2[0], states2[1], states2[2], State(0), states2[3]};
+            states2[3].is_dummy = true;
         }
         else
         {

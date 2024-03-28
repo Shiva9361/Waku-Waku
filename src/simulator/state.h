@@ -21,11 +21,14 @@ public:
     int rd;
     int imm;
     int latency;
+    bool miss;
     std::string opcode;
     std::string func3;
     std::string func7;
     bool is_dummy;
     bool branch_taken;
+    bool i_fetched;
+    bool m_fetched;
     State(int pc);
 };
 
@@ -44,4 +47,7 @@ State::State(int pc)
     write = false;
     next_pc = -1;
     branch_taken = false;
+    miss = false;
+    i_fetched = false;
+    m_fetched = false;
 }

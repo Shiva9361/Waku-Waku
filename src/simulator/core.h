@@ -51,13 +51,13 @@ public:
     Core(int pc, int dataloc);
     void savereg(int core);
     void fetch(int *memory);
-    void fetch(int *memory, State &instruction);
+    void fetch(int *memory, State &instruction, Cache cache);
     void decode();
     void decode(State &state);
     int execute(std::map<std::string, int> latencies, int &counter);
     void execute(State &instruction);
     void mem(int *memory);
-    void mem(State &instruction, int *memory);
+    void mem(State &instruction, int *memory, Cache cache);
     void writeback(State &instruction, int &instruction_count);
     bool predict(int pc);
 
@@ -77,7 +77,7 @@ void Core::fetch(int memory[])
     pc++;
 }
 
-void Core::fetch(int memory[], State &state)
+void Core::fetch(int memory[], State &state, Cache cache)
 {
     if (state.is_dummy)
     {
@@ -86,11 +86,20 @@ void Core::fetch(int memory[], State &state)
 #ifdef PRINT
     std::cout << state.pc << std::endl;
 #endif
-    int_instruction = memory[state.pc];
+    if (state.i_fetched)
+    {
+        state.latency--;
+        return;
+    }
+
+    std::pair<int, bool> cache_result = cache.read(state.pc);
+    int instruction = cache_result.first;
+    state.miss = !cache_result.second;
     std::bitset<32> bin_instruction(int_instruction);
     std::string instruction_string = bin_instruction.to_string();
 
     state.instruction = instruction_string;
+    state.fetched = true;
 
     if (!predict(state.pc))
     {
@@ -613,11 +622,16 @@ void Core::mem(int *memory)
 #endif
 }
 
-void Core::mem(State &state, int *memory)
+void Core::mem(State &state, int *memory, Cache cache)
 {
 
     if (state.is_dummy)
     {
+        return;
+    }
+    if (state.m_fetched)
+    {
+        state.latency--;
         return;
     }
 
@@ -642,11 +656,15 @@ void Core::mem(State &state, int *memory)
             {
                 if (state.is_operand1)
                 {
-                    state.temp_reg = memory[state.operand1 / 4 + state.imm / 4];
+                    std::pair<int, bool> cache_result = cache.read(state.operand1 / 4 + state.imm / 4);
+                    state.temp_reg = cache_result.first;
+                    state.miss = !cache_result.second;
                 }
                 else
                 {
-                    state.temp_reg = memory[registers[state.rs1] / 4 + state.imm / 4];
+                    std::pair<int, bool> cache_result = cache.read(registers[state.rs1] / 4 + state.imm / 4);
+                    state.temp_reg = cache_result.first;
+                    state.miss = !cache_result.second;
                 }
             }
         }
@@ -658,8 +676,10 @@ void Core::mem(State &state, int *memory)
             if (state.is_operand1 == true)
             {
                 memory[state.operand1 / 4 + state.imm / 4] = registers[state.rs1];
+                cache.write(state.operand1 / 4 + state.imm / 4, registers[state.rs1]);
             }
             memory[registers[state.rs2] / 4 + state.imm / 4] = registers[state.rs1];
+            cache.write(registers[state.rs2] / 4 + state.imm / 4, registers[state.rs1]);
 #ifdef PRINT
             std::cout << "Wrote to mem" << registers[state.rs1] << std::endl;
 #endif
