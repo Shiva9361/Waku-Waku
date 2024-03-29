@@ -1,33 +1,5 @@
-#include <bitset>
-#include <iostream>
 #include "hazardDetector.h"
-#include <bits/stdc++.h>
-#include <string>
-
-int bin_to_int(std::string bin)
-{
-    int n = bin.length();
-    int r = 0;
-    int w = 1;
-    for (int i = n - 1; i >= 0; i--)
-    {
-        if (i == 1)
-        {
-            if (bin[i] == '1')
-            {
-                r += w;
-            }
-            w *= -2;
-            continue;
-        }
-        else if (bin[i] == '1')
-        {
-            r += w;
-        }
-        w *= 2;
-    }
-    return r;
-}
+#include "cache.h"
 
 class Core
 {
@@ -51,13 +23,13 @@ public:
     Core(int pc, int dataloc);
     void savereg(int core);
     void fetch(int *memory);
-    void fetch(int *memory, State &instruction, Cache cache);
+    void fetch(int *memory, State &instruction, Cache *cache);
     void decode();
     void decode(State &state);
     int execute(std::map<std::string, int> latencies, int &counter);
     void execute(State &instruction);
     void mem(int *memory);
-    void mem(State &instruction, int *memory, Cache cache);
+    void mem(State &instruction, int *memory, Cache *cache);
     void writeback(State &instruction, int &instruction_count);
     bool predict(int pc);
 
@@ -77,7 +49,7 @@ void Core::fetch(int memory[])
     pc++;
 }
 
-void Core::fetch(int memory[], State &state, Cache cache)
+void Core::fetch(int memory[], State &state, Cache *cache)
 {
     if (state.is_dummy)
     {
@@ -92,14 +64,14 @@ void Core::fetch(int memory[], State &state, Cache cache)
         return;
     }
 
-    std::pair<int, bool> cache_result = cache.read(state.pc);
+    std::pair<int, bool> cache_result = cache->read(state.pc, memory);
     int instruction = cache_result.first;
     state.miss = !cache_result.second;
-    std::bitset<32> bin_instruction(int_instruction);
+    std::bitset<32> bin_instruction(instruction);
     std::string instruction_string = bin_instruction.to_string();
 
     state.instruction = instruction_string;
-    state.fetched = true;
+    state.i_fetched = true;
 
     if (!predict(state.pc))
     {
@@ -109,6 +81,9 @@ void Core::fetch(int memory[], State &state, Cache cache)
     {
         // Nvm
     }
+#ifdef PRINT
+    std::cout << "fetched" << std::endl;
+#endif
 }
 
 void Core::decode()
@@ -418,6 +393,7 @@ void Core::execute(State &state)
         state.latency -= 1;
         if (state.func3 == "000" && state.func7 == "0000000")
         {
+
 #ifdef PRINT
             std::cout << "ID: "
                       << "add" << std::endl;
@@ -622,7 +598,7 @@ void Core::mem(int *memory)
 #endif
 }
 
-void Core::mem(State &state, int *memory, Cache cache)
+void Core::mem(State &state, int *memory, Cache *cache)
 {
 
     if (state.is_dummy)
@@ -656,13 +632,13 @@ void Core::mem(State &state, int *memory, Cache cache)
             {
                 if (state.is_operand1)
                 {
-                    std::pair<int, bool> cache_result = cache.read(state.operand1 / 4 + state.imm / 4);
+                    std::pair<int, bool> cache_result = cache->read(state.operand1 / 4 + state.imm / 4, memory);
                     state.temp_reg = cache_result.first;
                     state.miss = !cache_result.second;
                 }
                 else
                 {
-                    std::pair<int, bool> cache_result = cache.read(registers[state.rs1] / 4 + state.imm / 4);
+                    std::pair<int, bool> cache_result = cache->read(registers[state.rs1] / 4 + state.imm / 4, memory);
                     state.temp_reg = cache_result.first;
                     state.miss = !cache_result.second;
                 }
@@ -676,10 +652,10 @@ void Core::mem(State &state, int *memory, Cache cache)
             if (state.is_operand1 == true)
             {
                 memory[state.operand1 / 4 + state.imm / 4] = registers[state.rs1];
-                cache.write(state.operand1 / 4 + state.imm / 4, registers[state.rs1]);
+                cache->write(state.operand1 / 4 + state.imm / 4, registers[state.rs1]);
             }
             memory[registers[state.rs2] / 4 + state.imm / 4] = registers[state.rs1];
-            cache.write(registers[state.rs2] / 4 + state.imm / 4, registers[state.rs1]);
+            cache->write(registers[state.rs2] / 4 + state.imm / 4, registers[state.rs1]);
 #ifdef PRINT
             std::cout << "Wrote to mem" << registers[state.rs1] << std::endl;
 #endif

@@ -107,10 +107,9 @@ def run():
                 file1 = "codes/slot1.s"
 
             latencies = {"addi": int(request.form['addi']), "add": int(request.form['add']),
-                         "div": int(request.form['div']), "mul": int(request.form['mul']), "sub": int(request.form['sub'])}
+                         "div": int(request.form['div']), "mul": int(request.form['mul']), "sub": int(request.form['sub']), "fmiss": 4, "fhit": 2}
             processor = p.Processor(
-                file0, file1, bool(request.form["pipeline"]), bool(request.form["forward"]), latencies)
-
+                file0, file1, request.form["pipeline"] == "true", request.form["forward"] == "true", latencies, [64, 2, 2, 0])
             clear()
             stats = processor.getStats()
             for _ in stats:
@@ -151,6 +150,7 @@ def run():
                 session["core1_pipeline_states"] = pipeline_states[1]
 
         except Exception as error:
+            print("hi")
             print(error)
             clear()
 

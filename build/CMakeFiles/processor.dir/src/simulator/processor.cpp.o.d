@@ -369,10 +369,11 @@ CMakeFiles/processor.dir/src/simulator/processor.cpp.o: \
  /usr/include/c++/11/iostream /usr/include/c++/11/istream \
  /usr/include/c++/11/bits/istream.tcc \
  /media/shiva/Shiv/Scripts/CO_Project/Waku-Waku-c/src/simulator/core.h \
- /usr/include/c++/11/bitset \
  /media/shiva/Shiv/Scripts/CO_Project/Waku-Waku-c/src/simulator/hazardDetector.h \
  /media/shiva/Shiv/Scripts/CO_Project/Waku-Waku-c/src/simulator/state.h \
  /usr/include/c++/11/climits \
+ /media/shiva/Shiv/Scripts/CO_Project/Waku-Waku-c/src/simulator/cache.h \
+ /usr/include/c++/11/bitset \
  /usr/include/x86_64-linux-gnu/c++/11/bits/stdc++.h \
  /usr/include/c++/11/cfloat \
  /usr/lib/gcc/x86_64-linux-gnu/11/include/float.h \
