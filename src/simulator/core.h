@@ -675,6 +675,7 @@ void Core::mem(State &state, int *memory, Cache *cache)
     {
         registers[state.rs2] = temp_operand2;
     }
+    state.m_fetched = true;
 }
 
 void Core::writeback(State &state, int &instruction_count)

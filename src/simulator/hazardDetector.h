@@ -144,7 +144,7 @@ void HazardDetector::hazard_with_forwarding(std::vector<State> &states, int &haz
                 hazard_count++;
             }
             if (states[2].rs2 == states[1].rd && !states[2].is_dummy)
-            { // need to add store case
+            {
                 states[2].operand2 = states[1].temp_reg;
                 states[2].is_operand2 = true;
                 hazard_count++;
@@ -161,7 +161,7 @@ void HazardDetector::hazard_with_forwarding(std::vector<State> &states, int &haz
             hazard_count++;
         }
         if (states[2].rs2 == states[0].rd && !states[2].is_dummy)
-        { // need to add store case
+        {
             states[2].operand2 = states[0].temp_reg;
             states[2].is_operand2 = true;
             hazard_count++;
@@ -181,6 +181,7 @@ void HazardDetector::hazard_with_forwarding(std::vector<State> &states, int &haz
         }
     }
     // E -> D forwarding only stall
+    // Load, execute stall
     if (states[1].rd != 0 && !states[1].is_dummy)
     {
         if (states[1].opcode == "0000011" && (states[1].rd == states[3].rs1 || states[1].rd == states[3].rs2))

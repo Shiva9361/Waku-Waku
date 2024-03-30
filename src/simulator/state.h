@@ -29,7 +29,8 @@ public:
     bool branch_taken;
     bool i_fetched;
     bool m_fetched;
-    bool cache_latency_added;
+    bool fetch_latency;
+    bool mem_latency;
     State(int pc);
 };
 
@@ -51,5 +52,6 @@ State::State(int pc)
     miss = false;
     i_fetched = false;
     m_fetched = false;
-    cache_latency_added = false;
+    fetch_latency = false;
+    mem_latency = false;
 }
