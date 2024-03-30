@@ -8,21 +8,21 @@ addi x7 x0 20 # x7 is decremented in each iteration
 addi x8 x0 20 # saves the length of array and is not modified
 loop1:
 beq x0 x7 exit
-addi x7 x7 -1
+addi x7 x7 -1 #5
 loop2:
-beq x1 x8 exit2
-addi x1 x1 1
-lw x4 0(x5)
-lw x9 4(x5)
-blt x4 x9 noswap 
-sw x4 4(x5)
-sw x9 0(x5)
+beq x1 x8 exit2 #6
+addi x1 x1 1 #7
+lw x4 0(x5) #8
+lw x9 4(x5) #9
+blt x4 x9 noswap #10 
+sw x4 4(x5) #11
+sw x9 0(x5) #12
 noswap:
-addi x5 x5 4
-j loop2
+addi x5 x5 4 #13
+j loop2 #14
 exit2:
-add x1 x0 x0
-add x5 x6 x0
-j loop1
+add x1 x0 x0 #15
+add x5 x6 x0 #16
+j loop1 #17
 exit:
-add x0 x0 x0
+add x0 x0 x0 #18

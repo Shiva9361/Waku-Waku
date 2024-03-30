@@ -1,31 +1,30 @@
-// #include <pybind11/pybind11.h>
-// #include <pybind11/stl.h>
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 #include <iostream>
 #include "core.h"
 #include "assembler.h"
 #include <string>
 
-// namespace py = pybind11;
+namespace py = pybind11;
 class Processor
 {
 private:
     int memory[1024] = {0};
     Core cores[2] = {Core(0, 84), Core(856, 943)}; // .text is of size 84 words
     Cache *cache;
-    int clock_0;
-    int clock_1;
+    int clocks[2];
     int clock;
     bool all_dummy1;
     bool all_dummy2;
-    int instruction_count_1;
-    int instruction_count_0;
+    int instruction_count[2];
     int hazard_count_1;
     int hazard_count_0;
-    int stall_count_1;
-    int stall_count_0;
+    long long int stall_count_1;
+    long long int stall_count_0;
     Assembler assembler;
     HazardDetector hazardDetector;
     std::vector<std::vector<std::map<std::string, std::string>>> pipeline_states;
+    std::vector<std::map<std::string, std::string>> memory_states;
 
 public:
     Processor(std::string file1, std::string file2, bool pipeline, bool forwarding, std::map<std::string, int> latencies, std::vector<int> cache_parameters);
@@ -36,29 +35,31 @@ public:
     void save_stats();
     void save_mem();
     void write_pipeline_state(int core, std::vector<State> states);
-    void process_pipeline_wo_forwarding(int &hazard_count, std::vector<State> &states, std::map<std::string, int> latencies, int core, int &stall_count, bool &all_dummy);
-    void process_pipeline_with_forwarding(int &hazard_count, std::vector<State> &states, std::map<std::string, int> latencies, int core, int &stall_count, bool &all_dummy);
+    void write_memory_state();
+    void process_pipeline_wo_forwarding(int &hazard_count, std::vector<State> &states, std::map<std::string, int> latencies, int core, long long int &stall_count, bool &all_dummy);
+    void process_pipeline_with_forwarding(int &hazard_count, std::vector<State> &states, std::map<std::string, int> latencies, int core, long long int &stall_count, bool &all_dummy);
 
     std::vector<std::map<std::string, float>> getStats();
+    std::vector<std::map<std::string, std::string>> getMemory();
     std::vector<std::vector<std::map<std::string, std::string>>> getPipeline();
     std::vector<std::vector<std::map<std::string, std::string>>> getRegisters();
 };
 
 Processor::Processor(std::string file1, std::string file2, bool pipeline, bool forwarding, std::map<std::string, int> latencies, std::vector<int> cache_parameters)
 {
-
-    clock_0 = 0;
+    srand(time(NULL)); // For random replacement policy
+    clocks[0] = 0;
+    clocks[1] = 0;
     clock = 0;
-    clock_1 = 0;
     hazard_count_0 = 0;
     hazard_count_1 = 0;
-    instruction_count_1 = 0;
-    instruction_count_0 = 0;
+    stall_count_0 = 0;
+    stall_count_1 = 0;
+    instruction_count[1] = 0;
+    instruction_count[0] = 0;
     pipeline_states = {{},
                        {}};
-    std::cout << "bef c" << std::endl;
     cache = new Cache(cache_parameters[0], cache_parameters[1], cache_parameters[2], cache_parameters[3]);
-    std::cout << "af c" << std::endl;
     /*
         Initialize by adding programs to memory
     */
@@ -128,6 +129,10 @@ std::vector<std::vector<std::map<std::string, std::string>>> Processor::getPipel
 {
     return pipeline_states;
 }
+std::vector<std::map<std::string, std::string>> Processor::getMemory()
+{
+    return memory_states;
+}
 void Processor::write_pipeline_state(int core, std::vector<State> states)
 {
     int index = 0;
@@ -147,33 +152,41 @@ void Processor::write_pipeline_state(int core, std::vector<State> states)
     pipeline_states[core].push_back(temp);
     return;
 }
+void Processor::write_memory_state()
+{
+    std::map<std::string, std::string> temp;
+    for (int i = 0; i < 1024; i++)
+    {
+        temp[std::to_string(i)] = std::to_string(memory[i]);
+    }
+}
 
 void Processor::save_stats()
 {
     std::ofstream Stats("data/stats.txt");
-    Stats << instruction_count_0 << std::endl;
-    Stats << instruction_count_1 << std::endl;
+    Stats << instruction_count[0] << std::endl;
+    Stats << instruction_count[1] << std::endl;
     Stats << hazard_count_0 << std::endl;
     Stats << hazard_count_1 << std::endl;
-    Stats << clock_0 << std::endl;
-    Stats << clock_1 << std::endl;
+    Stats << clocks[0] << std::endl;
+    Stats << clocks[1] << std::endl;
 }
 
 std::vector<std::map<std::string, float>> Processor::getStats()
 {
     std::vector<std::map<std::string, float>> stat;
     std::map<std::string, float> temp;
-    temp["IC"] = instruction_count_0;
+    temp["IC"] = instruction_count[0];
     temp["HC"] = hazard_count_0;
     temp["SC"] = stall_count_0;
-    temp["Clock"] = clock_0;
-    temp["IPC"] = (float)instruction_count_0 / clock_0;
+    temp["Clock"] = clocks[0];
+    temp["IPC"] = (float)instruction_count[0] / clocks[0];
     stat.push_back(temp);
-    temp["IC"] = instruction_count_1;
+    temp["IC"] = instruction_count[1];
     temp["HC"] = hazard_count_1;
     temp["SC"] = stall_count_1;
-    temp["Clock"] = clock_1;
-    temp["IPC"] = (float)instruction_count_1 / clock_1;
+    temp["Clock"] = clocks[1];
+    temp["IPC"] = (float)instruction_count[1] / clocks[1];
     stat.push_back(temp);
 
     return stat;
@@ -191,23 +204,17 @@ void Processor::save_mem()
 }
 void Processor::evaluate(std::vector<State> &pipelined_instructions, int core, std::map<std::string, int> latencies)
 {
-    if (core == 0)
-    {
-        cores[core].writeback(pipelined_instructions[0], instruction_count_0);
-    }
-    else
-    {
-        cores[core].writeback(pipelined_instructions[0], instruction_count_1);
-    }
-    // std::cout<<"did wb"<<std::endl;
+
+    cores[core].writeback(pipelined_instructions[0], instruction_count[core]);
+
     cores[core].mem(pipelined_instructions[1], memory, cache);
-    // std::cout<<"did mem"<<std::endl;
+
     cores[core].execute(pipelined_instructions[2]);
-    // std::cout<<"did exe"<<std::endl;
+
     cores[core].decode(pipelined_instructions[3]);
-    // std::cout<<"did dec"<<std::endl;
+
     cores[core].fetch(memory, pipelined_instructions[4], cache);
-    // std::cout<<"did fe"<<std::endl;
+
     pipelined_instructions.erase(pipelined_instructions.begin());
 
     /*
@@ -260,14 +267,7 @@ void Processor::evaluate(std::vector<State> &pipelined_instructions, int core, s
         pipelined_instructions[0].mem_latency = true;
     }
     // clock++;
-    if (core == 0)
-    {
-        clock_0++;
-    }
-    else
-    {
-        clock_1++;
-    }
+    clocks[core]++;
 }
 
 void Processor::run_unpipelined(int instructions1_length, int instructions2_length, std::map<std::string, int> latencies)
@@ -303,8 +303,8 @@ void Processor::run_unpipelined(int instructions1_length, int instructions2_leng
         {
             cores[1].savereg(1);
         }
-        instruction_count_0++;
-        instruction_count_1++;
+        instruction_count[0]++;
+        instruction_count[1]++;
         clock++;
     }
     while (i < instructions1_length)
@@ -343,7 +343,7 @@ void Processor::run_unpipelined(int instructions1_length, int instructions2_leng
         clock++;
     }
 }
-void Processor::process_pipeline_wo_forwarding(int &hazard_count, std::vector<State> &states, std::map<std::string, int> latencies, int core, int &stall_count, bool &all_dummy)
+void Processor::process_pipeline_wo_forwarding(int &hazard_count, std::vector<State> &states, std::map<std::string, int> latencies, int core, long long int &stall_count, bool &all_dummy)
 {
 
     write_pipeline_state(core, states);
@@ -354,15 +354,14 @@ void Processor::process_pipeline_wo_forwarding(int &hazard_count, std::vector<St
     hazard_count += hazard_count1;
 
     std::vector<State> oldstates = states;
-    evaluate(states, 0, latencies);
-
+    evaluate(states, core, latencies);
     if (states[0].latency > 0 && !states[0].is_dummy) // mem latency
     {
         states = {State(0), states[0], states[1], states[2], states[3]};
         states[0].is_dummy = true;
         stall_count++;
     }
-    else if (states[1].opcode == "1101111" || states[1].opcode == "1100011")
+    else if ((states[1].opcode == "1101111" || states[1].opcode == "1100011") && !states[1].is_dummy)
     {
         // Flush
         states[2].is_dummy = true;
@@ -426,29 +425,27 @@ void Processor::run_pipelined_wo_forwarding(std::map<std::string, int> latencies
     for (int i = 0; i < 4; i++)
     {
         states1[i].is_dummy = true;
-    }
-    for (int i = 0; i < 4; i++)
-    {
         states2[i].is_dummy = true;
     }
     while (!all_dummy1 && !all_dummy2)
     {
-
+        write_memory_state();
         process_pipeline_wo_forwarding(hazard_count_0, states1, latencies, 0, stall_count_0, all_dummy1);
         process_pipeline_wo_forwarding(hazard_count_1, states2, latencies, 1, stall_count_1, all_dummy2);
     }
 
     while (!all_dummy1)
     {
+        write_memory_state();
         process_pipeline_wo_forwarding(hazard_count_0, states1, latencies, 0, stall_count_0, all_dummy1);
     }
     while (!all_dummy2)
     {
+        write_memory_state();
         process_pipeline_wo_forwarding(hazard_count_1, states2, latencies, 1, stall_count_1, all_dummy2);
     }
-    save_stats();
 }
-void Processor::process_pipeline_with_forwarding(int &hazard_count, std::vector<State> &states, std::map<std::string, int> latencies, int core, int &stall_count, bool &all_dummy)
+void Processor::process_pipeline_with_forwarding(int &hazard_count, std::vector<State> &states, std::map<std::string, int> latencies, int core, long long int &stall_count, bool &all_dummy)
 {
     write_pipeline_state(core, states);
 
@@ -460,7 +457,7 @@ void Processor::process_pipeline_with_forwarding(int &hazard_count, std::vector<
 
     std::vector<State> oldstates = states;
 
-    evaluate(states, 0, latencies);
+    evaluate(states, core, latencies);
 
     if (states[0].latency > 0 && !states[0].is_dummy) // mem latency
     {
@@ -551,36 +548,37 @@ void Processor::run_pipelined_with_forwarding(std::map<std::string, int> latenci
     for (int i = 0; i < 4; i++)
     {
         states1[i].is_dummy = true;
-    }
-    for (int i = 0; i < 4; i++)
-    {
         states2[i].is_dummy = true;
     }
 
     while (!all_dummy1 && !all_dummy2)
     {
+        write_memory_state();
         process_pipeline_with_forwarding(hazard_count_0, states1, latencies, 0, stall_count_0, all_dummy1);
         process_pipeline_with_forwarding(hazard_count_1, states2, latencies, 1, stall_count_1, all_dummy2);
     }
     while (!all_dummy1)
     {
+        write_memory_state();
         process_pipeline_with_forwarding(hazard_count_0, states1, latencies, 0, stall_count_0, all_dummy1);
     }
     while (!all_dummy2)
     {
+        write_memory_state();
         process_pipeline_with_forwarding(hazard_count_1, states2, latencies, 1, stall_count_1, all_dummy2);
     }
 }
 /*
-    Binding required functions to be exposed to python.
+    Binding required functions, to be exposed to python.
 */
-// PYBIND11_MODULE(processor, handle)
-// {
-//     handle.doc() = "A c++ class for a RISC-V simulator with pipelining, data-forwarding, variable latencies and more !!!";
-//     py::class_<Processor>(
-//         handle, "Processor")
-//         .def(py::init<std::string, std::string, bool, bool, std::map<std::string, int>, std::vector<int>>())
-//         .def("getStats", &Processor::getStats)
-//         .def("getPipeline", &Processor::getPipeline)
-//         .def("getRegisters", &Processor::getRegisters);
-// }
+PYBIND11_MODULE(processor, handle)
+{
+    handle.doc() = "A c++ class for a RISC-V simulator with pipelining, data-forwarding, variable latencies and more !!!";
+    py::class_<Processor>(
+        handle, "Processor")
+        .def(py::init<std::string, std::string, bool, bool, std::map<std::string, int>, std::vector<int>>())
+        .def("getStats", &Processor::getStats)
+        .def("getPipeline", &Processor::getPipeline)
+        .def("getRegisters", &Processor::getRegisters)
+        .def("getMemory", &Processor::getMemory);
+}

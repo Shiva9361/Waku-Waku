@@ -11,13 +11,6 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=5)
 
 Session(app)
 
-memory_list = []
-
-
-def clear_mem():
-    global memory_list
-    memory_list = [{str(i): 0 for i in range(1024)}]
-
 
 def clear_cores_reg():
     clear_reg_states = [
@@ -66,8 +59,9 @@ def index():
 
 @app.route('/mem')
 def memory():
-    global memory_list
-    return jsonify(memory_list)
+    if "memory" not in session:
+        session["memory"] = [{str(i): 0 for i in range(1024)}]
+    return session["memory"]
 
 
 @app.route('/clear')
@@ -79,14 +73,12 @@ def clear():
     session["core1_pipeline_states"] = []
     session["core0_stats"] = {}
     session["core1_stats"] = {}
-
+    session["memory"] = [{str(i): 0 for i in range(1024)}]
     return {"message": "done"}
 
 
 @app.route('/run', methods=["POST"])
 def run():
-    global memory_list
-    memory_list = []
 
     if request.method == "POST":
         try:
@@ -109,7 +101,7 @@ def run():
             latencies = {"addi": int(request.form['addi']), "add": int(request.form['add']),
                          "div": int(request.form['div']), "mul": int(request.form['mul']), "sub": int(request.form['sub']), "fmiss": 4, "fhit": 2}
             processor = p.Processor(
-                file0, file1, request.form["pipeline"] == "true", request.form["forward"] == "true", latencies, [64, 2, 2, 0])
+                file0, file1, request.form["pipeline"] == "true", request.form["forward"] == "true", latencies, [64, 8, 4, 0])
             clear()
             stats = processor.getStats()
             for _ in stats:
@@ -121,28 +113,11 @@ def run():
 
             session["core0_stats"] = stats[0]
             session["core1_stats"] = stats[1]
-
-            memory_dict = {}
-            with open("data/memory_before.txt") as mem_file:
-                memory = mem_file.read()
-                memory.replace("\r\n", "\n")
-                memory = memory.split("\n")
-                memory_dict = {}
-                for i in memory[:-1]:
-                    memory_dict[int(i.split(",")[0])] = int(i.split(",")[1])
-                memory_list.append(memory_dict)
-            with open("data/memory_after.txt") as mem_file:
-                memory = mem_file.read()
-                memory.replace("\r\n", "\n")
-                memory = memory.split("\n")
-                memory_dict = {}
-                for i in memory[:-1]:
-                    memory_dict[int(i.split(",")[0])] = int(i.split(",")[1])
-                memory_list.append(memory_dict)
+            session["memory"] = processor.getMemory()
 
             register_states = processor.getRegisters()
-            session["core1_reg_states"] = register_states[0]
-            session["core0_reg_states"] = register_states[1]
+            session["core0_reg_states"] = register_states[0]
+            session["core1_reg_states"] = register_states[1]
 
             if request.form["pipeline"] == "true":
                 pipeline_states = processor.getPipeline()
@@ -200,5 +175,4 @@ def core1_stats_fun():
 
 
 if __name__ == "__main__":
-    clear_mem()
     app.run(debug=True)
