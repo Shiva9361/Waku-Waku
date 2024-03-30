@@ -207,17 +207,16 @@ void Processor::evaluate(std::vector<State> &pipelined_instructions, int core, s
     /*
         Adding latencies
     */
-    if (pipelined_instructions[3].miss && !pipelined_instructions[3].cache_latency_added && !pipelined_instructions[3].is_dummy)
+    if (pipelined_instructions[3].miss && !pipelined_instructions[3].fetch_latency && !pipelined_instructions[3].is_dummy)
     {
         pipelined_instructions[3].latency = latencies["fmiss"] - 1;
-        std::cout << pipelined_instructions[3].latency << "l" << std::endl;
         pipelined_instructions[3].miss = false;
-        pipelined_instructions[3].cache_latency_added = true;
+        pipelined_instructions[3].fetch_latency = true;
     }
-    else if (!pipelined_instructions[3].miss && !pipelined_instructions[3].cache_latency_added && !pipelined_instructions[3].is_dummy)
+    else if (!pipelined_instructions[3].miss && !pipelined_instructions[3].fetch_latency && !pipelined_instructions[3].is_dummy)
     {
         pipelined_instructions[3].latency = latencies["fhit"] - 1;
-        pipelined_instructions[3].cache_latency_added = true;
+        pipelined_instructions[3].fetch_latency = true;
     }
 
     if (pipelined_instructions[2].opcode == "0110011")
@@ -243,7 +242,16 @@ void Processor::evaluate(std::vector<State> &pipelined_instructions, int core, s
     {
         pipelined_instructions[2].latency = latencies["addi"];
     }
-
+    if(pipelined_instructions[0].miss && !pipelined_instructions[0].mem_latency && !pipelined_instructions[0].is_dummy){
+        pipelined_instructions[3].latency = latencies["mmiss"] - 1;
+        pipelined_instructions[3].miss = false;
+        pipelined_instructions[3].mem_latency = true;
+    }
+    else if (!pipelined_instructions[0].miss && !pipelined_instructions[0].mem_latency && !pipelined_instructions[0].is_dummy)
+    {
+        pipelined_instructions[3].latency = latencies["mhit"] - 1;
+        pipelined_instructions[3].mem_latency = true;
+    }
     // clock++;
     if (core == 0)
     {
@@ -361,15 +369,19 @@ void Processor::run_pipelined_wo_forwarding(std::map<std::string, int> latencies
 
         evaluate(states1, 0, latencies);
 
-        if (states1[1].opcode == "1101111" || states1[1].opcode == "1100011")
+        if (states1[0].latency > 0 && !states1[0].is_dummy) // mem latency
+        {
+            states1 = {State(0), states1[0], states1[1], states1[2], states1[3]};
+            states1[0].is_dummy = true;
+        }
+        else if (states1[1].opcode == "1101111" || states1[1].opcode == "1100011")
         {
             // Flush
             states1[2].is_dummy = true;
             states1[3].is_dummy = true;
             states1.push_back(State(states1[1].next_pc));
         }
-        else if ((states1[1].opcode == "0110011" || states1[1].opcode == "0010011") && states1[1].latency > 0 && !states1[1].is_dummy)
-        {
+        else if ((states1[1].opcode == "0110011" || states1[1].opcode == "0010011") && states1[1].latency > 0 && !states1[1].is_dummy)        {
             states1 = {states1[0], State(0), states1[1], oldstates1[3], states1[3]};
             states1[1].is_dummy = true;
         }
@@ -378,11 +390,10 @@ void Processor::run_pipelined_wo_forwarding(std::map<std::string, int> latencies
             states1 = {states1[0], states1[1], State(0), oldstates1[3], states1[3]};
             states1[2].is_dummy = true;
         }
-        else if (states1[3].latency > 0 && !states1[3].is_dummy)
+        else if (states1[3].latency > 0 && !states1[3].is_dummy) // fetch latency
         {
             states1 = {states1[0], states1[1], states1[2], State(0), states1[3]};
             states1[3].is_dummy = true;
-            std::cout << "lat" << states1[4].latency << std::endl;
         }
         else
         {
@@ -416,7 +427,12 @@ void Processor::run_pipelined_wo_forwarding(std::map<std::string, int> latencies
 
         evaluate(states2, 1, latencies);
 
-        if (states2[1].opcode == "1101111" || states2[1].opcode == "1100011")
+        if (states2[0].latency > 0 && !states2[0].is_dummy) // mem latency
+        {
+            states2 = {State(0), states2[0], states2[1], states2[2], states2[3]};
+            states2[0].is_dummy = true;
+        }
+        else if (states2[1].opcode == "1101111" || states2[1].opcode == "1100011")
         {
             // Flush
             states2[2].is_dummy = true;
@@ -435,7 +451,7 @@ void Processor::run_pipelined_wo_forwarding(std::map<std::string, int> latencies
         }
         else if (states2[3].latency > 0 && !states2[3].is_dummy)
         {
-            states2 = {states2[0], states2[1], states2[2], State(0), states2[3]};
+            states2 = {states2[0], states2[1], states2[2], State(0), states2[3]}; // fetch latency
             states2[3].is_dummy = true;
         }
         else
@@ -481,7 +497,12 @@ void Processor::run_pipelined_wo_forwarding(std::map<std::string, int> latencies
         std::vector<State> oldstates1 = states1;
         evaluate(states1, 0, latencies);
 
-        if (states1[1].opcode == "1101111" || states1[1].opcode == "1100011")
+        if (states1[0].latency > 0 && !states1[0].is_dummy) // mem latency
+        {
+            states1 = {State(0), states1[0], states1[1], states1[2], states1[3]};
+            states1[0].is_dummy = true;
+        }
+        else if (states1[1].opcode == "1101111" || states1[1].opcode == "1100011")
         {
             // Flush
             states1[2].is_dummy = true;
@@ -500,7 +521,7 @@ void Processor::run_pipelined_wo_forwarding(std::map<std::string, int> latencies
         }
         else if (states1[3].latency > 0 && !states1[3].is_dummy)
         {
-            states1 = {states1[0], states1[1], states1[2], State(0), states1[3]};
+            states1 = {states1[0], states1[1], states1[2], State(0), states1[3]}; // fetch latency
             states1[3].is_dummy = true;
         }
         else
@@ -544,8 +565,13 @@ void Processor::run_pipelined_wo_forwarding(std::map<std::string, int> latencies
         std::vector<State> oldstates2 = states2;
 
         evaluate(states2, 1, latencies);
-
-        if (states2[1].opcode == "1101111" || states2[1].opcode == "1100011")
+        
+        if (states2[0].latency > 0 && !states2[0].is_dummy) // mem latency
+        {
+            states2 = {State(0), states2[0], states2[1], states2[2], states2[3]};
+            states2[0].is_dummy = true;
+        }
+        else if (states2[1].opcode == "1101111" || states2[1].opcode == "1100011")
         {
             // Flush
             states2[2].is_dummy = true;
