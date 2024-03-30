@@ -184,7 +184,6 @@ void Cache::write(int address, int data)
     int index = bin_to_int(index_string);
     int offset = bin_to_int(offset_string);
     std::map<int, std::pair<std::vector<int>, int>> cache[index];
-    cache[index] = cache[index];
     if (cache[index].count(tag))
     {
         hits++;
