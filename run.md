@@ -1,9 +1,9 @@
-## Run these two commands after installing the dependencies
+## Run these two commands
 
 ```
-python3 gui/main.py
+pip install -r requirements.txt
 ```
 
 ```
-serve -s gui/frontend/dist -p 8080
+python3 src/gui/backend/main.py
 ```
