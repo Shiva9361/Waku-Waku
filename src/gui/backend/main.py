@@ -12,6 +12,26 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=5)
 Session(app)
 
 
+def preAssembler(file):
+    with open(file, "r") as readfile:
+        data = readfile.readlines()
+        final_data = []
+        for line in data:
+            formatted_line = line.lstrip().replace(
+                ",", " ").replace("\r\n", "\n")
+            tokens = formatted_line.split(" ")
+            # if tokens[0][-1] == ":" and (len(tokens) > 1):
+            #     final_data.append(tokens[0])
+            #     final_data.append(" ".join(tokens[1:]))
+            # else:
+            final_data.append(" ".join(tokens))
+    with open(file, "w") as writefile:
+        writefile.writelines(final_data)
+
+
+preAssembler("codes/hazard.s")
+
+
 def clear_cores_reg():
     clear_reg_states = [
         {
@@ -86,16 +106,16 @@ def run():
             file1 = "codes/bubble_sort.s"
             if request.form["code0"]:
                 content = request.form["code0"]
-                content = content.replace("\r\n", "\n").replace(",", " ")
                 with open("codes/slot0.s", "w") as slot0_file:
                     slot0_file.write(content)
+                preAssembler("codes/slot0.s")
                 file0 = "codes/slot0.s"
 
             if request.form["code1"]:
                 content = request.form["code1"]
-                content = content.replace("\r\n", "\n").replace(",", " ")
                 with open("codes/slot1.s", "w") as slot0_file:
                     slot0_file.write(content)
+                preAssembler("codes/slot1.s")
                 file1 = "codes/slot1.s"
 
             latencies = {"addi": int(request.form['addi']), "add": int(request.form['add']),
