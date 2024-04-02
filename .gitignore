@@ -2,6 +2,6 @@
 *.out
 *.txt
 .vscode
-main.cpp
+src/simulator/main.cpp
 flask_session
 build
