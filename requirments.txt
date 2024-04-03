@@ -1,2 +1,0 @@
-flask==3.0.2
-flask_session==0.7.0
