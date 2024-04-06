@@ -31,6 +31,7 @@ public:
     bool m_fetched;
     bool fetch_latency;
     bool mem_latency;
+    bool is_mem_instruction;
     State(int pc);
 };
 
@@ -54,4 +55,5 @@ State::State(int pc)
     m_fetched = false;
     fetch_latency = false;
     mem_latency = false;
+    is_mem_instruction = false;
 }

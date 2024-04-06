@@ -5,21 +5,19 @@
       <button
         type="button"
         style="width: 100px; height: 25px; margin-bottom: 10px"
-        onclick="document.getElementById('main').style.display = 'block'
-                  document.getElementById('mem').style.display = 'none'"
+        @click="show = 0"
       >
         Home
       </button>
       <button
         type="button"
         style="width: 100px; height: 25px; margin-bottom: 10px"
-        onclick="document.getElementById('mem').style.display = 'block'
-                  document.getElementById('main').style.display = 'none'"
+        @click="show = 1"
       >
         Memory
       </button>
     </div>
-    <section id="main" style="display: block">
+    <div v-show="show == 0" id="main">
       <div class="content">
         <div class="reghistory">
           <div class="reghistory0">
@@ -210,14 +208,14 @@
           </div>
         </div>
       </div>
-    </section>
-    <section id="mem" style="display: none">
+    </div>
+    <div div v-show="show == 1" id="mem">
       <div class="memory"></div>
       <MemoryHistory
         :memory_history="memory_history"
         :mem_counter="mem_counter"
       />
-    </section>
+    </div>
   </div>
 </template>
 
@@ -250,6 +248,7 @@ export default {
       is_running: false,
       memory_history: [],
       mem_counter: 0,
+      show: 0,
     };
   },
   components: {

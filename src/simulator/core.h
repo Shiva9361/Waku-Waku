@@ -1,6 +1,31 @@
 #include "hazardDetector.h"
 #include "cache.h"
 
+int bin_to_int(std::string bin)
+{
+    int n = bin.length();
+    int r = 0;
+    int w = 1;
+    for (int i = n - 1; i >= 0; i--)
+    {
+        if (i == 1)
+        {
+            if (bin[i] == '1')
+            {
+                r += w;
+            }
+            w *= -2;
+            continue;
+        }
+        else if (bin[i] == '1')
+        {
+            r += w;
+        }
+        w *= 2;
+    }
+    return r;
+}
+
 class Core
 {
 private:
@@ -21,7 +46,7 @@ private:
 public:
     int pc;
     Core(int pc, int dataloc);
-    void savereg(int core);
+    void savereg();
     void fetch(int *memory);
     void fetch(int *memory, State &instruction, Cache *cache);
     void decode();
@@ -29,7 +54,7 @@ public:
     int execute(std::map<std::string, int> latencies, int &counter);
     void execute(State &instruction);
     void mem(int *memory);
-    void mem(State &instruction, int *memory, Cache *cache);
+    void mem(State &instruction, int *memory, Cache *cache, std::vector<std::vector<std::pair<int, int>>> &memorystate);
     void writeback(State &instruction, int &instruction_count);
     bool predict(int pc);
 
@@ -155,6 +180,7 @@ void Core::decode(State &state)
         state.rd = std::stoi(state.instruction.substr(20, 5), nullptr, 2);
         state.imm = bin_to_int(state.instruction.substr(0, 12));
         state.write = true;
+        state.is_mem_instruction = true;
     }
     else if (state.opcode == "0110011")
     {
@@ -598,9 +624,10 @@ void Core::mem(int *memory)
 #endif
 }
 
-void Core::mem(State &state, int *memory, Cache *cache)
+void Core::mem(State &state, int *memory, Cache *cache, std::vector<std::vector<std::pair<int, int>>> &memorystate)
 {
 
+    memorystate.push_back(std::vector<std::pair<int, int>>());
     if (state.is_dummy)
     {
         return;
@@ -652,10 +679,12 @@ void Core::mem(State &state, int *memory, Cache *cache)
             if (state.is_operand1 == true)
             {
                 memory[state.operand1 / 4 + state.imm / 4] = registers[state.rs1];
+                memorystate[memorystate.size() - 1].push_back({state.operand1 / 4 + state.imm / 4, registers[state.rs1]});
                 cache->write(state.operand1 / 4 + state.imm / 4, registers[state.rs1]);
             }
             memory[registers[state.rs2] / 4 + state.imm / 4] = registers[state.rs1];
             cache->write(registers[state.rs2] / 4 + state.imm / 4, registers[state.rs1]);
+            memorystate[memorystate.size() - 1].push_back({registers[state.rs2] / 4 + state.imm / 4, registers[state.rs1]});
 #ifdef PRINT
             std::cout << "Wrote to mem" << registers[state.rs1] << std::endl;
 #endif
@@ -693,7 +722,7 @@ void Core::writeback(State &state, int &instruction_count)
 #endif
     }
 }
-void Core::savereg(int core)
+void Core::savereg()
 {
     std::map<std::string, std::string> temp;
 
