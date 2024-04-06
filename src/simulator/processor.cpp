@@ -24,7 +24,7 @@ private:
     Assembler assembler;
     HazardDetector hazardDetector;
     std::vector<std::vector<std::map<std::string, std::string>>> pipeline_states;
-    std::vector<std::vector<std::vector<std::pair<int, int>>>> memory_states;
+    std::vector<std::vector<std::pair<int, std::vector<std::pair<int, int>>>>> memory_states;
 
 public:
     Processor(std::string file1, std::string file2, bool pipeline, bool forwarding, std::map<std::string, int> latencies, std::vector<int> cache_parameters);
@@ -39,7 +39,7 @@ public:
     void process_pipeline_with_forwarding(int &hazard_count, std::vector<State> &states, std::map<std::string, int> latencies, int core, long long int &stall_count, bool &all_dummy);
 
     std::vector<std::map<std::string, float>> getStats();
-    std::vector<std::vector<std::vector<std::pair<int, int>>>> getMemory();
+    std::vector<std::vector<std::pair<int, std::vector<std::pair<int, int>>>>> getMemory();
     std::vector<std::vector<std::map<std::string, std::string>>> getPipeline();
     std::vector<std::vector<std::map<std::string, std::string>>> getRegisters();
     std::vector<cache_type> getCache();
@@ -130,7 +130,7 @@ std::vector<std::vector<std::map<std::string, std::string>>> Processor::getPipel
 {
     return pipeline_states;
 }
-std::vector<std::vector<std::vector<std::pair<int, int>>>> Processor::getMemory()
+std::vector<std::vector<std::pair<int, std::vector<std::pair<int, int>>>>> Processor::getMemory()
 {
     return memory_states;
 }
@@ -202,9 +202,12 @@ void Processor::save_mem()
 void Processor::evaluate(std::vector<State> &pipelined_instructions, int core, std::map<std::string, int> latencies)
 {
 
+    // clock++;
+    clocks[core]++;
+
     cores[core].writeback(pipelined_instructions[0], instruction_count[core]);
 
-    cores[core].mem(pipelined_instructions[1], memory, cache, memory_states[core]);
+    cores[core].mem(pipelined_instructions[1], memory, cache, memory_states[core], clocks[core]);
 
     cores[core].execute(pipelined_instructions[2]);
 
@@ -263,8 +266,6 @@ void Processor::evaluate(std::vector<State> &pipelined_instructions, int core, s
         pipelined_instructions[0].latency = latencies["mhit"] - 1;
         pipelined_instructions[0].mem_latency = true;
     }
-    // clock++;
-    clocks[core]++;
 }
 
 void Processor::run_unpipelined(int instructions1_length, int instructions2_length, std::map<std::string, int> latencies)
@@ -567,7 +568,7 @@ PYBIND11_MODULE(processor, handle)
     handle.doc() = "A c++ class for a RISC-V simulator with pipelining, data-forwarding, variable latencies and more !!!";
     py::class_<Processor>(
         handle, "Processor")
-        .def(py::init<std::string, std::string, bool, bool, std::map<std::string, int>, std::vector<int>>())
+        .def(py::init<std::string, std::string, bool, bool, std::map<std::string, int>, std::vector<int>>(), "Constructor")
         .def("getStats", &Processor::getStats)
         .def("getPipeline", &Processor::getPipeline)
         .def("getRegisters", &Processor::getRegisters)

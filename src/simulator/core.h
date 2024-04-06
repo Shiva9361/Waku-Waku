@@ -54,7 +54,7 @@ public:
     int execute(std::map<std::string, int> latencies, int &counter);
     void execute(State &instruction);
     void mem(int *memory);
-    void mem(State &instruction, int *memory, Cache *cache, std::vector<std::vector<std::pair<int, int>>> &memorystate);
+    void mem(State &instruction, int *memory, Cache *cache, std::vector<std::pair<int, std::vector<std::pair<int, int>>>> &memorystate, int cycle);
     void writeback(State &instruction, int &instruction_count);
     bool predict(int pc);
 
@@ -624,10 +624,9 @@ void Core::mem(int *memory)
 #endif
 }
 
-void Core::mem(State &state, int *memory, Cache *cache, std::vector<std::vector<std::pair<int, int>>> &memorystate)
+void Core::mem(State &state, int *memory, Cache *cache, std::vector<std::pair<int, std::vector<std::pair<int, int>>>> &memorystate, int cycle)
 {
 
-    memorystate.push_back(std::vector<std::pair<int, int>>());
     if (state.is_dummy)
     {
         return;
@@ -676,15 +675,17 @@ void Core::mem(State &state, int *memory, Cache *cache, std::vector<std::vector<
     {
         if (state.func3 == "010")
         {
+            memorystate.push_back({cycle, std::vector<std::pair<int, int>>()}); // Create new state
             if (state.is_operand1 == true)
             {
                 memory[state.operand1 / 4 + state.imm / 4] = registers[state.rs1];
-                memorystate[memorystate.size() - 1].push_back({state.operand1 / 4 + state.imm / 4, registers[state.rs1]});
+
+                memorystate[memorystate.size() - 1].second.push_back({state.operand1 / 4 + state.imm / 4, registers[state.rs1]});
                 cache->write(state.operand1 / 4 + state.imm / 4, registers[state.rs1]);
             }
             memory[registers[state.rs2] / 4 + state.imm / 4] = registers[state.rs1];
             cache->write(registers[state.rs2] / 4 + state.imm / 4, registers[state.rs1]);
-            memorystate[memorystate.size() - 1].push_back({registers[state.rs2] / 4 + state.imm / 4, registers[state.rs1]});
+            memorystate[memorystate.size() - 1].second.push_back({registers[state.rs2] / 4 + state.imm / 4, registers[state.rs1]});
 #ifdef PRINT
             std::cout << "Wrote to mem" << registers[state.rs1] << std::endl;
 #endif
