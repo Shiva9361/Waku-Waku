@@ -81,11 +81,13 @@ Processor::Processor(std::string file1, std::string file2, bool pipeline, bool f
     for (auto i : data1)
     {
         memory[dataloc1++] = i;
+        initial_memory[dataloc1 - 1] = memory[dataloc1 - 1];
     }
 
     for (auto i : data2)
     {
         memory[dataloc2++] = i;
+        initial_memory[dataloc2 - 1] = memory[dataloc2 - 1];
     }
 
     for (int index = 0; index < instructions1.size(); index++)
