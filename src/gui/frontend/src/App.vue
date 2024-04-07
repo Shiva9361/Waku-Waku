@@ -16,6 +16,13 @@
       >
         Memory
       </button>
+      <button
+        type="button"
+        style="width: 100px; height: 25px; margin-bottom: 10px"
+        @click="show = 2"
+      >
+        Cache
+      </button>
     </div>
     <div v-show="show == 0" id="main">
       <div class="content">
@@ -211,9 +218,14 @@
     </div>
     <div div v-show="show == 1" id="mem">
       <div class="memory"></div>
-      <MemoryHistory
-        :memory_history="memory_history"
-        :mem_counter="mem_counter"
+      <Memory
+        :memory="memory"
+      />
+    </div>
+    <div div v-show="show == 2" id="c">
+      <div class="cache"></div>
+      <CacheHistory
+        :cache_history="cache_history"
       />
     </div>
   </div>
@@ -223,7 +235,8 @@
 import PipelineHistory from "./components/PipelineHistory.vue";
 import RegisterHistory from "./components/RegisterHistory.vue";
 import Stats from "./components/Stats.vue";
-import MemoryHistory from "./components/MemoryHistory.vue";
+import Memory from "./components/Memory.vue"
+import CacheHistory from "./components/CacheHistory.vue";
 import axios from "axios";
 export default {
   name: "App",
@@ -247,6 +260,7 @@ export default {
       delay: 1000,
       is_running: false,
       memory_history: [],
+      memory: {},
       mem_counter: 0,
       show: 0,
     };
@@ -255,7 +269,8 @@ export default {
     PipelineHistory,
     RegisterHistory,
     Stats,
-    MemoryHistory,
+    Memory,
+    CacheHistory
   },
   methods: {
     async fetchPipelineHistory0() {
@@ -305,6 +320,19 @@ export default {
       const data = await res.json();
       return data;
     },
+    async fetchInitialMemory(){
+      const res = await fetch("http://127.0.0.1:5000/initialmem", {
+        credentials: "include",
+      });
+      const data = await res.json();
+      console.log(data);
+      return data;
+    },
+    // async initialize(){
+    //   for(let i = 0; i < 1024; i++){
+    //     this.$set(this.memory, i, 0);
+    //   }
+    // },
     async postRunRequest() {
       clearInterval(this.interval);
       let pipe = false,
@@ -338,6 +366,7 @@ export default {
         this.memory_history = await this.fetchMemory();
         this.stats_0 = await this.fetchStats0();
         this.stats_1 = await this.fetchStats1();
+        this.memory = await this.fetchInitialMemory();
         this.display_stats_0 = false;
         this.display_stats_1 = false;
         this.play_0 = true;
@@ -364,6 +393,7 @@ export default {
             this.mem_counter = 1;
             clearInterval(this.interval);
           }
+          this.update_memory();
         }, document.getElementById("delay").value);
       } catch (error) {
         console.log(error);
@@ -377,12 +407,26 @@ export default {
     play_pause_1() {
       if (!this.no_play_1) this.play_1 = !this.play_1;
     },
+    update_memory(){
+      if(this.counter_0 in this.memory_history[0]) {
+        let res = this.memory_history[0][this.counter_0];
+        this.memory[res[0]] = res[1];
+      }
+      if(this.counter_1 in this.memory_history[1]) {
+        let res = this.memory_history[1][this.counter_1];
+        this.memory[res[0]] = res[1];
+      }
+    }
   },
+  // async mounted(){
+  //   await this.initialize();  
+  // },
   async created() {
     fetch("http://127.0.0.1:5000/clear");
     this.register_history_0 = await this.fetchRegisterHistory0();
     this.register_history_1 = await this.fetchRegisterHistory1();
     this.memory_history = await this.fetchMemory();
+    this.memory = await this.fetchInitialMemory();
   },
 };
 </script>

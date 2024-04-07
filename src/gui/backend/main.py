@@ -80,7 +80,7 @@ def index():
 @app.route("/initialmem")
 def initial_mem():
     if "initmem" not in session:
-        session["initmem"] = [{str(i): 0 for i in range(1024)}]
+        session["initmem"] = {str(i): 0 for i in range(1024)}
     return session["initmem"]
 
 
@@ -127,6 +127,7 @@ def run():
 
             latencies = {"addi": int(request.form['addi']), "add": int(request.form['add']),
                          "div": int(request.form['div']), "mul": int(request.form['mul']), "sub": int(request.form['sub']), "fmiss": 4, "fhit": 2}
+            print("hi")
             processor = p.Processor(
                 file0, file1, request.form["pipeline"] == "true", request.form["forward"] == "true", latencies, [64, 8, 4, 0])
             clear()
@@ -141,7 +142,7 @@ def run():
             for _ in range(1024):
                 if (_ not in initial_mem):
                     initial_mem[_] = 0
-            session["initmem"] = [initial_mem]
+            session["initmem"] = initial_mem
             session["core0_stats"] = stats[0]
             session["core1_stats"] = stats[1]
             session["memory"] = processor.getMemory()
@@ -154,7 +155,7 @@ def run():
                 pipeline_states = processor.getPipeline()
                 session["core0_pipeline_states"] = pipeline_states[0]
                 session["core1_pipeline_states"] = pipeline_states[1]
-
+            print("hi")
         except Exception as error:
             print("hi")
             print(error)

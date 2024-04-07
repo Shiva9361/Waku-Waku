@@ -1,6 +1,7 @@
 <template>
   <div>
     <Memory :memory="memory_history[mem_counter]" />
+
   </div>
 </template>
 

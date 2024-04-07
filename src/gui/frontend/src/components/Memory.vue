@@ -11,8 +11,14 @@
 export default {
   name: "MemoryComponent",
   props: {
-    memory: Object,
+    memory: {
+      type: Object,
+      required: true,
+    },
   },
+  mounted(){
+    console.log(this.memory)
+  }
 };
 </script>
 
