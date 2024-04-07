@@ -24,7 +24,7 @@ private:
     Assembler assembler;
     HazardDetector hazardDetector;
     std::vector<std::vector<std::map<std::string, std::string>>> pipeline_states;
-    std::vector<std::vector<std::pair<int, std::vector<std::pair<int, int>>>>> memory_states;
+    std::vector<std::unordered_map<int, std::pair<int, int>>> memory_states;
 
 public:
     Processor(std::string file1, std::string file2, bool pipeline, bool forwarding, std::map<std::string, int> latencies, std::vector<int> cache_parameters);
@@ -39,7 +39,7 @@ public:
     void process_pipeline_with_forwarding(int &hazard_count, std::vector<State> &states, std::map<std::string, int> latencies, int core, long long int &stall_count, bool &all_dummy);
 
     std::vector<std::map<std::string, float>> getStats();
-    std::vector<std::vector<std::pair<int, std::vector<std::pair<int, int>>>>> getMemory();
+    std::vector<std::unordered_map<int, std::pair<int, int>>> getMemory();
     std::vector<std::vector<std::map<std::string, std::string>>> getPipeline();
     std::vector<std::vector<std::map<std::string, std::string>>> getRegisters();
     std::vector<cache_type> getCache();
@@ -130,7 +130,7 @@ std::vector<std::vector<std::map<std::string, std::string>>> Processor::getPipel
 {
     return pipeline_states;
 }
-std::vector<std::vector<std::pair<int, std::vector<std::pair<int, int>>>>> Processor::getMemory()
+std::vector<std::unordered_map<int, std::pair<int, int>>> Processor::getMemory()
 {
     return memory_states;
 }

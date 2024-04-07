@@ -133,7 +133,7 @@ def run():
 
             session["core0_stats"] = stats[0]
             session["core1_stats"] = stats[1]
-            # session["memory"] = processor.getMemory()
+            session["memory"] = processor.getMemory()
             print(len(processor.getMemory()), "h")
             print(processor.getMemory())
 
