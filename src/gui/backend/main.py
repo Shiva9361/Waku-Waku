@@ -77,10 +77,17 @@ def index():
     return render_template("index.html")
 
 
+@app.route("/initialmem")
+def initial_mem():
+    if "initmem" not in session:
+        session["initmem"] = [{str(i): 0 for i in range(1024)}]
+    return session["initmem"]
+
+
 @app.route('/mem')
 def memory():
     if "memory" not in session:
-        session["memory"] = [{str(i): 0 for i in range(1024)}]
+        session["initmem"] = []
     return session["memory"]
 
 
@@ -130,7 +137,7 @@ def run():
                         _[key] = round(_[key], 2)
                     else:
                         _[key] = int(_[key])
-
+            session["initmem"] = processor.getInitialMemory()
             session["core0_stats"] = stats[0]
             session["core1_stats"] = stats[1]
             session["memory"] = processor.getMemory()

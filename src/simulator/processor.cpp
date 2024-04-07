@@ -25,6 +25,7 @@ private:
     HazardDetector hazardDetector;
     std::vector<std::vector<std::map<std::string, std::string>>> pipeline_states;
     std::vector<std::unordered_map<int, std::pair<int, int>>> memory_states;
+    std::unordered_map<int, int> initial_memory;
 
 public:
     Processor(std::string file1, std::string file2, bool pipeline, bool forwarding, std::map<std::string, int> latencies, std::vector<int> cache_parameters);
@@ -43,6 +44,7 @@ public:
     std::vector<std::vector<std::map<std::string, std::string>>> getPipeline();
     std::vector<std::vector<std::map<std::string, std::string>>> getRegisters();
     std::vector<cache_type> getCache();
+    std::unordered_map<int, int> getInitialMemory();
 };
 
 Processor::Processor(std::string file1, std::string file2, bool pipeline, bool forwarding, std::map<std::string, int> latencies, std::vector<int> cache_parameters)
@@ -89,10 +91,12 @@ Processor::Processor(std::string file1, std::string file2, bool pipeline, bool f
     for (int index = 0; index < instructions1.size(); index++)
     {
         memory[index] = instructions1.at(index);
+        initial_memory[index] = memory[index];
     }
     for (int index = 856; index - 856 < instructions2.size(); index++)
     {
         memory[index] = instructions2.at(index - 856);
+        initial_memory[index] = memory[index];
     }
 
     std::ofstream MembFile("data/memory_before.txt");
@@ -129,6 +133,10 @@ std::vector<std::vector<std::map<std::string, std::string>>> Processor::getRegis
 std::vector<std::vector<std::map<std::string, std::string>>> Processor::getPipeline()
 {
     return pipeline_states;
+}
+std::unordered_map<int, int> Processor::getInitialMemory()
+{
+    return initial_memory;
 }
 std::vector<std::unordered_map<int, std::pair<int, int>>> Processor::getMemory()
 {
@@ -573,5 +581,6 @@ PYBIND11_MODULE(processor, handle)
         .def("getPipeline", &Processor::getPipeline)
         .def("getRegisters", &Processor::getRegisters)
         .def("getMemory", &Processor::getMemory)
-        .def("getCache", &Processor::getCache);
+        .def("getCache", &Processor::getCache)
+        .def("getInitialMemory", &Processor::getInitialMemory);
 }
