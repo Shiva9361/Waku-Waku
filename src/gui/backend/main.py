@@ -141,7 +141,7 @@ def run():
             for _ in range(1024):
                 if (_ not in initial_mem):
                     initial_mem[_] = 0
-            session["initmem"] = initial_mem
+            session["initmem"] = [initial_mem]
             session["core0_stats"] = stats[0]
             session["core1_stats"] = stats[1]
             session["memory"] = processor.getMemory()
