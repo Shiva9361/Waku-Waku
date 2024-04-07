@@ -634,6 +634,18 @@ void Core::mem(State &state, int *memory, Cache *cache, std::unordered_map<int, 
     if (state.m_fetched)
     {
         state.latency--;
+        if (state.opcode == "0100011" && !state.latency)
+        {
+            if (state.is_operand1 == true)
+            {
+                memorystate[cycle] = {state.operand1 / 4 + state.imm / 4, registers[state.rs1]};
+            }
+            else
+            {
+                memorystate[cycle] = {registers[state.rs2] / 4 + state.imm / 4, registers[state.rs1]};
+            }
+        }
+
         return;
     }
 
@@ -678,13 +690,10 @@ void Core::mem(State &state, int *memory, Cache *cache, std::unordered_map<int, 
             if (state.is_operand1 == true)
             {
                 memory[state.operand1 / 4 + state.imm / 4] = registers[state.rs1];
-
-                memorystate[cycle] = {state.operand1 / 4 + state.imm / 4, registers[state.rs1]};
                 cache->write(state.operand1 / 4 + state.imm / 4, registers[state.rs1]);
             }
             memory[registers[state.rs2] / 4 + state.imm / 4] = registers[state.rs1];
             cache->write(registers[state.rs2] / 4 + state.imm / 4, registers[state.rs1]);
-            memorystate[cycle] = {registers[state.rs2] / 4 + state.imm / 4, registers[state.rs1]};
 #ifdef PRINT
             std::cout << "Wrote to mem" << registers[state.rs1] << std::endl;
 #endif
