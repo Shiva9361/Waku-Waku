@@ -137,12 +137,14 @@ def run():
                         _[key] = round(_[key], 2)
                     else:
                         _[key] = int(_[key])
-            session["initmem"] = processor.getInitialMemory()
+            initial_mem = processor.getInitialMemory()
+            for _ in range(1024):
+                if (_ not in initial_mem):
+                    initial_mem[_] = 0
+            session["initmem"] = initial_mem
             session["core0_stats"] = stats[0]
             session["core1_stats"] = stats[1]
             session["memory"] = processor.getMemory()
-            print(len(processor.getMemory()), "h")
-            print(processor.getMemory())
 
             register_states = processor.getRegisters()
             session["core0_reg_states"] = register_states[0]
