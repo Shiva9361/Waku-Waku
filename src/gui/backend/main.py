@@ -87,8 +87,15 @@ def initial_mem():
 @app.route('/mem')
 def memory():
     if "memory" not in session:
-        session["initmem"] = []
+        session["memory"] = []
     return session["memory"]
+
+
+@app.route('/cache')
+def cache():
+    if "cache" not in session:
+        session["cache"] = []
+    return session["cache"]
 
 
 @app.route('/clear')
@@ -148,7 +155,7 @@ def run():
             session["core1_stats"] = stats[1]
 
             print(stats[2]["hits"]/(stats[2]["hits"]+stats[2]["misses"]))
-            print(processor.getCache())
+            session["cache"] = processor.getCache()
             session["memory"] = processor.getMemory()
 
             register_states = processor.getRegisters()
