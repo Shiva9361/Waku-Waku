@@ -126,12 +126,13 @@ def run():
                 file1 = "codes/slot1.s"
 
             latencies = {"addi": int(request.form['addi']), "add": int(request.form['add']),
-                         "div": int(request.form['div']), "mul": int(request.form['mul']), "sub": int(request.form['sub']), "fmiss": 4, "fhit": 2}
+                         "div": int(request.form['div']), "mul": int(request.form['mul']), "sub": int(request.form['sub']), "fmiss": 4, "fhit": 2, "mhit": 2, "mmiss": 1}
             print("hi")
             processor = p.Processor(
-                file0, file1, request.form["pipeline"] == "true", request.form["forward"] == "true", latencies, [64, 8, 4, 0])
+                file0, file1, request.form["pipeline"] == "true", request.form["forward"] == "true", latencies, [64, 8, 4, 1])
             clear()
             stats = processor.getStats()
+            print()
             for _ in stats:
                 for key in _:
                     if key == "IPC":
@@ -145,6 +146,9 @@ def run():
             session["initmem"] = initial_mem
             session["core0_stats"] = stats[0]
             session["core1_stats"] = stats[1]
+
+            print(stats[2]["hits"]/(stats[2]["hits"]+stats[2]["misses"]))
+            print(processor.getCache())
             session["memory"] = processor.getMemory()
 
             register_states = processor.getRegisters()
@@ -155,7 +159,6 @@ def run():
                 pipeline_states = processor.getPipeline()
                 session["core0_pipeline_states"] = pipeline_states[0]
                 session["core1_pipeline_states"] = pipeline_states[1]
-            print("hi")
         except Exception as error:
             print("hi")
             print(error)

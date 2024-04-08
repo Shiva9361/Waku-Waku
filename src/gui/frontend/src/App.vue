@@ -218,15 +218,11 @@
     </div>
     <div div v-show="show == 1" id="mem">
       <div class="memory"></div>
-      <Memory
-        :memory="memory"
-      />
+      <Memory :memory="memory" />
     </div>
     <div div v-show="show == 2" id="c">
       <div class="cache"></div>
-      <CacheHistory
-        :cache_history="cache_history"
-      />
+      <CacheHistory :cache_history="cache_history" />
     </div>
   </div>
 </template>
@@ -235,7 +231,7 @@
 import PipelineHistory from "./components/PipelineHistory.vue";
 import RegisterHistory from "./components/RegisterHistory.vue";
 import Stats from "./components/Stats.vue";
-import Memory from "./components/Memory.vue"
+import Memory from "./components/Memory.vue";
 import CacheHistory from "./components/CacheHistory.vue";
 import axios from "axios";
 export default {
@@ -270,7 +266,7 @@ export default {
     RegisterHistory,
     Stats,
     Memory,
-    CacheHistory
+    CacheHistory,
   },
   methods: {
     async fetchPipelineHistory0() {
@@ -320,7 +316,7 @@ export default {
       const data = await res.json();
       return data;
     },
-    async fetchInitialMemory(){
+    async fetchInitialMemory() {
       const res = await fetch("http://127.0.0.1:5000/initialmem", {
         credentials: "include",
       });
@@ -407,19 +403,21 @@ export default {
     play_pause_1() {
       if (!this.no_play_1) this.play_1 = !this.play_1;
     },
-    update_memory(){
-      if(this.counter_0 in this.memory_history[0]) {
+    update_memory() {
+      if (this.counter_0 in this.memory_history[0]) {
         let res = this.memory_history[0][this.counter_0];
         this.memory[res[0]] = res[1];
+        console.log(res[1]);
       }
-      if(this.counter_1 in this.memory_history[1]) {
+      if (this.counter_1 in this.memory_history[1]) {
         let res = this.memory_history[1][this.counter_1];
         this.memory[res[0]] = res[1];
+        console.log(res[1]);
       }
-    }
+    },
   },
   // async mounted(){
-  //   await this.initialize();  
+  //   await this.initialize();
   // },
   async created() {
     fetch("http://127.0.0.1:5000/clear");

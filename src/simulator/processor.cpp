@@ -43,7 +43,7 @@ public:
     std::vector<std::unordered_map<int, std::pair<int, int>>> getMemory();
     std::vector<std::vector<std::map<std::string, std::string>>> getPipeline();
     std::vector<std::vector<std::map<std::string, std::string>>> getRegisters();
-    std::vector<cache_type> getCache();
+    std::unordered_map<int, std::vector<std::pair<int, int>>> getCache();
     std::unordered_map<int, int> getInitialMemory();
 };
 
@@ -101,13 +101,6 @@ Processor::Processor(std::string file1, std::string file2, bool pipeline, bool f
         initial_memory[index] = memory[index];
     }
 
-    std::ofstream MembFile("data/memory_before.txt");
-
-    for (int i = 0; i < 1024; i++)
-    {
-        MembFile << i << "," << memory[i] << std::endl;
-    }
-    MembFile.close();
     if (pipeline)
     {
         if (forwarding)
@@ -123,7 +116,6 @@ Processor::Processor(std::string file1, std::string file2, bool pipeline, bool f
     {
         run_unpipelined(instructions1.size(), instructions2.size(), latencies);
     }
-    save_mem();
 }
 std::vector<std::vector<std::map<std::string, std::string>>> Processor::getRegisters()
 {
@@ -144,7 +136,7 @@ std::vector<std::unordered_map<int, std::pair<int, int>>> Processor::getMemory()
 {
     return memory_states;
 }
-std::vector<cache_type> Processor::getCache()
+std::unordered_map<int, std::vector<std::pair<int, int>>> Processor::getCache()
 {
     return cache->getCache();
 }
@@ -182,7 +174,7 @@ void Processor::save_stats()
 std::vector<std::map<std::string, float>> Processor::getStats()
 {
     std::vector<std::map<std::string, float>> stat;
-    std::map<std::string, float> temp;
+    std::map<std::string, float> temp, temp2;
     temp["IC"] = instruction_count[0];
     temp["HC"] = hazard_count_0;
     temp["SC"] = stall_count_0;
@@ -194,8 +186,10 @@ std::vector<std::map<std::string, float>> Processor::getStats()
     temp["SC"] = stall_count_1;
     temp["Clock"] = clocks[1];
     temp["IPC"] = (float)instruction_count[1] / clocks[1];
+    temp2["hits"] = cache->getHitsMisses().first;
+    temp2["misses"] = cache->getHitsMisses().second;
     stat.push_back(temp);
-
+    stat.push_back(temp2);
     return stat;
 }
 
@@ -223,7 +217,7 @@ void Processor::evaluate(std::vector<State> &pipelined_instructions, int core, s
 
     cores[core].decode(pipelined_instructions[3]);
 
-    cores[core].fetch(memory, pipelined_instructions[4], cache);
+    cores[core].fetch(memory, pipelined_instructions[4], cache, clocks[core]);
 
     pipelined_instructions.erase(pipelined_instructions.begin());
 
