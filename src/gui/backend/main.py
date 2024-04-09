@@ -150,7 +150,6 @@ def clear():
         if _ in session:
             session.pop(_)
     session["initmem"] = [{str(i): 0 for i in range(1024)}]
-    session.pop("memory")
 
     return {"message": "done"}
 
