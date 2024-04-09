@@ -38,12 +38,14 @@ public:
     void write_pipeline_state(int core, std::vector<State> states);
     void process_pipeline_wo_forwarding(int &hazard_count, std::vector<State> &states, std::map<std::string, int> latencies, int core, long long int &stall_count, bool &all_dummy);
     void process_pipeline_with_forwarding(int &hazard_count, std::vector<State> &states, std::map<std::string, int> latencies, int core, long long int &stall_count, bool &all_dummy);
-
+    /*
+        GUI Specific functions
+    */
+    cache_state_type getCache();
     std::vector<std::map<std::string, float>> getStats();
     std::vector<incremental_data> getMemory();
     std::vector<incremental_data> getRegisters();
     std::vector<std::vector<std::map<std::string, std::string>>> getPipeline();
-    std::unordered_map<int, std::pair<int, std::vector<std::pair<int, int>>>> getCache();
     std::unordered_map<int, int> getInitialMemory();
 };
 
@@ -136,7 +138,7 @@ std::vector<std::unordered_map<int, std::pair<int, int>>> Processor::getMemory()
 {
     return memory_states;
 }
-std::unordered_map<int, std::pair<int, std::vector<std::pair<int, int>>>> Processor::getCache()
+cache_state_type Processor::getCache()
 {
     return cache->getCache();
 }
