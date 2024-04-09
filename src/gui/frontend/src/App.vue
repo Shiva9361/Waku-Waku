@@ -245,6 +245,7 @@
                     type="radio"
                     id="lru"
                     name="option2"
+                    checked
                   />
                 </div>
                 <div>
@@ -299,7 +300,6 @@
     <div div v-show="show == 1" id="mem">
       <div class="memory"></div>
       <Memory :memory="memory" />
-      <Memory :memory="memory" />
     </div>
     <div div v-show="show == 2" id="c">
       <div class="cache"></div>
@@ -341,6 +341,11 @@ export default {
       memory_history: [],
       memory: {},
       mem_counter: 0,
+      cache_history: [],
+      cache: {},
+      csize: 64,
+      bsize: 8,
+      associativity: 0,
       show: 0,
     };
   },
@@ -406,7 +411,13 @@ export default {
         credentials: "include",
       });
       const data = await res.json();
-      console.log(data);
+      return data;
+    },
+    async fetchCache() {
+      const res = await fetch("http://127.0.0.1:5000/cache", {
+        credentials: "include",
+      });
+      const data = await res.json();
       return data;
     },
     async initialize() {
@@ -414,20 +425,26 @@ export default {
         this.$set(this.registers_0, i, 0);
         this.$set(this.registers_1, i, 0);
       }
+      for(let i = 0; i < this.csize; i++){
+        this.$set(this.cache, i , 0);
+      }
     },
     async postRunRequest() {
       clearInterval(this.interval);
       let pipe = false,
-        forward = false;
+        forward = false,
+        lru = false;
       if (document.getElementById("pipe").checked) pipe = true;
       if (document.getElementById("forward").checked) {
         pipe = true;
         forward = true;
       }
+      if(document.getElementById("lru").checked) lru = true;
       try {
         const formData = axios.toFormData({
           pipeline: pipe,
           forward: forward,
+          lru: lru,
           addi: document.getElementById("addi").value,
           add: document.getElementById("add").value,
           div: document.getElementById("div").value,
@@ -435,6 +452,9 @@ export default {
           mul: document.getElementById("mul").value,
           code0: document.getElementById("code0").value,
           code1: document.getElementById("code1").value,
+          cache_size: document.getElementById("csize").value,
+          block_size: document.getElementById("bsize").value,
+          associativity: document.getElementById("associativity").value,
         });
         await axios.post("http://127.0.0.1:5000/run", formData, {
           headers: {
@@ -446,6 +466,10 @@ export default {
         this.register_history_1 = await this.fetchRegisterHistory1();
         this.pipeline_history_1 = await this.fetchPipelineHistory1();
         this.memory_history = await this.fetchMemory();
+        this.cache_history = await this.fetchCache();
+        this.csize = document.getElementById("csize").value;
+        this.bsize = document.getElementById("bsize").value;
+        this.associativity = document.getElementById("associativity").value;
         this.stats_0 = await this.fetchStats0();
         this.stats_1 = await this.fetchStats1();
         this.memory = await this.fetchInitialMemory();
@@ -478,6 +502,7 @@ export default {
           }
           this.update_memory();
           this.update_registers();
+          this.update_cache();
         }, document.getElementById("delay").value);
       } catch (error) {
         console.log(error);
@@ -513,6 +538,18 @@ export default {
         this.registers_1[res[0]] = res[1];
       }
     },
+    update_cache(){
+      if(this.counter_0 in this.cache_history){
+        for(let i = 0; i < this.cache_history[this.counter_0][1].length; i++){
+          this.cache[this.cache_history[this.counter_0][1][i][1]] = this.cache_history[this.counter_0][1][i][0];
+        }
+      }
+      if(this.counter_1 in this.cache_history){
+        for(let i = 0; i < this.cache_history[this.counter_1][1].length; i++){
+          this.cache[this.cache_history[this.counter_1][1][i][1]] = this.cache_history[this.counter_0][1][i][0];
+        }
+      }
+    },
   },
   async mounted() {
     await this.initialize();
@@ -523,6 +560,7 @@ export default {
     this.register_history_1 = await this.fetchRegisterHistory1();
     this.memory_history = await this.fetchMemory();
     this.memory = await this.fetchInitialMemory();
+    this.cache_history = await this.fetchCache();
   },
 };
 </script>
