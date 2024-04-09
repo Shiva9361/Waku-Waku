@@ -16,9 +16,6 @@ export default {
       required: true,
     },
   },
-  mounted(){
-    console.log(this.memory)
-  }
 };
 </script>
 

@@ -139,6 +139,46 @@
                   />
                 </div>
                 <div>
+                  <label>Instruction Hit</label>
+                  <input
+                    style="margin: 5px"
+                    type="number"
+                    id="ihit"
+                    value="1"
+                    min="1"
+                  />
+                </div>
+                <div>
+                  <label>Instruction Miss</label>
+                  <input
+                    style="margin: 5px"
+                    type="number"
+                    id="imiss"
+                    value="1"
+                    min="1"
+                  />
+                </div>
+                <div>
+                  <label>Memory Hit</label>
+                  <input
+                    style="margin: 5px"
+                    type="number"
+                    id="mhit"
+                    value="1"
+                    min="1"
+                  />
+                </div>
+                <div>
+                  <label>Memory Miss</label>
+                  <input
+                    style="margin: 5px"
+                    type="number"
+                    id="mmiss"
+                    value="1"
+                    min="1"
+                  />
+                </div>
+                <div>
                   <label>W/O Pipeline</label>
                   <input
                     style="margin: 5px"
@@ -174,6 +214,54 @@
                     id="delay"
                     value="1000"
                     min="10"
+                  />
+                </div>
+                <div>
+                  <label>Cache Size</label>
+                  <input
+                    style="margin: 5px"
+                    type="number"
+                    id="csize"
+                    value="64"
+                    min="1"
+                  />
+                </div>
+                <div>
+                  <label>Block Size</label>
+                  <input
+                    style="margin: 5px"
+                    type="number"
+                    id="bsize"
+                    value="8"
+                    min="1"
+                  />
+                </div>
+                <div>
+                  <label>Associativity</label>
+                  <input
+                    style="margin: 5px"
+                    type="number"
+                    id="associativity"
+                    value="0"
+                    min="0"
+                  />
+                </div>
+                <div>
+                  <label>LRU Policy</label>
+                  <input
+                    style="margin: 5px"
+                    type="radio"
+                    id="lru"
+                    name="option2"
+                  />
+                </div>
+                <div>
+                  <label>Random Policy</label>
+                  <input
+                    style="margin: 5px"
+                    type="radio"
+                    id="random"
+                    name="option2"
                   />
                 </div>
                 <div style="margin-top: 5px">
@@ -218,15 +306,11 @@
     </div>
     <div div v-show="show == 1" id="mem">
       <div class="memory"></div>
-      <Memory
-        :memory="memory"
-      />
+      <Memory :memory="memory" />
     </div>
     <div div v-show="show == 2" id="c">
       <div class="cache"></div>
-      <CacheHistory
-        :cache_history="cache_history"
-      />
+      <Cache :cache="cache" />
     </div>
   </div>
 </template>
@@ -235,8 +319,8 @@
 import PipelineHistory from "./components/PipelineHistory.vue";
 import RegisterHistory from "./components/RegisterHistory.vue";
 import Stats from "./components/Stats.vue";
-import Memory from "./components/Memory.vue"
-import CacheHistory from "./components/CacheHistory.vue";
+import Memory from "./components/Memory.vue";
+import Cache from "./components/Cache.vue";
 import axios from "axios";
 export default {
   name: "App",
@@ -270,7 +354,7 @@ export default {
     RegisterHistory,
     Stats,
     Memory,
-    CacheHistory
+    Cache,
   },
   methods: {
     async fetchPipelineHistory0() {
@@ -320,7 +404,7 @@ export default {
       const data = await res.json();
       return data;
     },
-    async fetchInitialMemory(){
+    async fetchInitialMemory() {
       const res = await fetch("http://127.0.0.1:5000/initialmem", {
         credentials: "include",
       });
@@ -407,19 +491,19 @@ export default {
     play_pause_1() {
       if (!this.no_play_1) this.play_1 = !this.play_1;
     },
-    update_memory(){
-      if(this.counter_0 in this.memory_history[0]) {
+    update_memory() {
+      if (this.counter_0 in this.memory_history[0]) {
         let res = this.memory_history[0][this.counter_0];
         this.memory[res[0]] = res[1];
       }
-      if(this.counter_1 in this.memory_history[1]) {
+      if (this.counter_1 in this.memory_history[1]) {
         let res = this.memory_history[1][this.counter_1];
         this.memory[res[0]] = res[1];
       }
-    }
+    },
   },
   // async mounted(){
-  //   await this.initialize();  
+  //   await this.initialize();
   // },
   async created() {
     fetch("http://127.0.0.1:5000/clear");
@@ -473,8 +557,9 @@ h1 {
 }
 .container {
   max-width: 350px;
+  height: 350px;
   margin: 20px auto;
-  overflow: auto;
+  overflow-y: auto;
   gap: 10px;
   border: 1px solid steelblue;
   padding: 50px;
