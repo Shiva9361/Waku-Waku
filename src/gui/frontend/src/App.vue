@@ -402,7 +402,6 @@ export default {
       return data;
     },
     async fetchInitialMemory() {
-    async fetchInitialMemory() {
       const res = await fetch("http://127.0.0.1:5000/initialmem", {
         credentials: "include",
       });
@@ -494,13 +493,10 @@ export default {
     },
     update_memory() {
       if (this.counter_0 in this.memory_history[0]) {
-    update_memory() {
-      if (this.counter_0 in this.memory_history[0]) {
         let res = this.memory_history[0][this.counter_0];
         this.memory[res[0]] = res[1];
         console.log(res[1]);
       }
-      if (this.counter_1 in this.memory_history[1]) {
       if (this.counter_1 in this.memory_history[1]) {
         let res = this.memory_history[1][this.counter_1];
         this.memory[res[0]] = res[1];
