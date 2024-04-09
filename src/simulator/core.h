@@ -1,6 +1,8 @@
 #include "hazardDetector.h"
 #include "cache.h"
 
+#define incremental_data std::unordered_map<int, std::pair<int, int>>
+
 int bin_to_int(std::string bin)
 {
     int n = bin.length();
@@ -46,19 +48,27 @@ private:
 public:
     int pc;
     Core(int pc, int dataloc);
+    /*
+        Unpipelined
+    */
     void savereg();
     void fetch(int *memory);
-    void fetch(int *memory, State &instruction, Cache *cache);
     void decode();
-    void decode(State &state);
     int execute(std::map<std::string, int> latencies, int &counter);
-    void execute(State &instruction);
     void mem(int *memory);
+    std::vector<std::map<std::string, std::string>> register_states;
+    /*
+        Pipelined
+    */
+    void fetch(int *memory, State &instruction, Cache *cache, int cycle);
+    void decode(State &state);
+    void execute(State &instruction);
     void mem(State &instruction, int *memory, Cache *cache, std::unordered_map<int, std::pair<int, int>> &memorystate, int cycle);
-    void writeback(State &instruction, int &instruction_count);
+    void writeback(State &instruction, int &instruction_count, int core);
+
     bool predict(int pc);
 
-    std::vector<std::map<std::string, std::string>> register_states;
+        incremental_data register_states_incremental;
 };
 
 Core::Core(int pc, int dataloc)
@@ -74,7 +84,7 @@ void Core::fetch(int memory[])
     pc++;
 }
 
-void Core::fetch(int memory[], State &state, Cache *cache)
+void Core::fetch(int memory[], State &state, Cache *cache, int cycle)
 {
     if (state.is_dummy)
     {
@@ -89,7 +99,7 @@ void Core::fetch(int memory[], State &state, Cache *cache)
         return;
     }
 
-    std::pair<int, bool> cache_result = cache->read(state.pc, memory);
+    std::pair<int, bool> cache_result = cache->read(state.pc, memory, cycle);
     int instruction = cache_result.first;
     state.miss = !cache_result.second;
     std::bitset<32> bin_instruction(instruction);
@@ -634,18 +644,6 @@ void Core::mem(State &state, int *memory, Cache *cache, std::unordered_map<int, 
     if (state.m_fetched)
     {
         state.latency--;
-        if (state.opcode == "0100011" && !state.latency)
-        {
-            if (state.is_operand1 == true)
-            {
-                memorystate[cycle] = {state.operand1 / 4 + state.imm / 4, registers[state.rs1]};
-            }
-            else
-            {
-                memorystate[cycle] = {registers[state.rs2] / 4 + state.imm / 4, registers[state.rs1]};
-            }
-        }
-
         return;
     }
 
@@ -670,13 +668,13 @@ void Core::mem(State &state, int *memory, Cache *cache, std::unordered_map<int, 
             {
                 if (state.is_operand1)
                 {
-                    std::pair<int, bool> cache_result = cache->read(state.operand1 / 4 + state.imm / 4, memory);
+                    std::pair<int, bool> cache_result = cache->read(state.operand1 / 4 + state.imm / 4, memory, cycle);
                     state.temp_reg = cache_result.first;
                     state.miss = !cache_result.second;
                 }
                 else
                 {
-                    std::pair<int, bool> cache_result = cache->read(registers[state.rs1] / 4 + state.imm / 4, memory);
+                    std::pair<int, bool> cache_result = cache->read(registers[state.rs1] / 4 + state.imm / 4, memory, cycle);
                     state.temp_reg = cache_result.first;
                     state.miss = !cache_result.second;
                 }
@@ -690,10 +688,12 @@ void Core::mem(State &state, int *memory, Cache *cache, std::unordered_map<int, 
             if (state.is_operand1 == true)
             {
                 memory[state.operand1 / 4 + state.imm / 4] = registers[state.rs1];
-                cache->write(state.operand1 / 4 + state.imm / 4, registers[state.rs1]);
+                memorystate[cycle] = {state.operand1 / 4 + state.imm / 4, registers[state.rs1]};
+                cache->write(state.operand1 / 4 + state.imm / 4, registers[state.rs1], cycle);
             }
             memory[registers[state.rs2] / 4 + state.imm / 4] = registers[state.rs1];
-            cache->write(registers[state.rs2] / 4 + state.imm / 4, registers[state.rs1]);
+            cache->write(registers[state.rs2] / 4 + state.imm / 4, registers[state.rs1], cycle);
+            memorystate[cycle] = {registers[state.rs2] / 4 + state.imm / 4, registers[state.rs1]};
 #ifdef PRINT
             std::cout << "Wrote to mem" << registers[state.rs1] << std::endl;
 #endif
@@ -716,7 +716,7 @@ void Core::mem(State &state, int *memory, Cache *cache, std::unordered_map<int, 
     state.m_fetched = true;
 }
 
-void Core::writeback(State &state, int &instruction_count)
+void Core::writeback(State &state, int &instruction_count, int cycle)
 {
     if (state.is_dummy)
     {
@@ -726,6 +726,7 @@ void Core::writeback(State &state, int &instruction_count)
     if (state.write && state.rd != 0)
     {
         registers[state.rd] = state.temp_reg;
+        register_states_incremental[cycle] = {state.rd, registers[state.rd]};
 #ifdef PRINT
         std::cout << "Wrote " << state.temp_reg << " to " << state.rd << std::endl;
 #endif

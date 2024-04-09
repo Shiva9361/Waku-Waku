@@ -1,5 +1,10 @@
 #!/bin/bash
-cd build
+if [ -d build ] then;
+    cd build;
+else 
+    mkdir build;
+    cd build;
+fi
 cmake ..
 make 
 if [ $? -eq 0 ]; then

@@ -1,5 +1,6 @@
 <template>
   <div class="registers">
+    <h2>Core {{ register_number }}</h2>
     <div v-for="(value, key) in registers_content" :key="key">
       <div class="register_key">{{ key }}</div>
       <div class="register_value">{{ value }}</div>
@@ -17,6 +18,7 @@ export default {
   },
   props: {
     registers_content: Object,
+    register_number: Number,
   },
 };
 </script>

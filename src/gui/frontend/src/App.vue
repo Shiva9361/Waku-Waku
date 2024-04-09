@@ -28,18 +28,10 @@
       <div class="content">
         <div class="reghistory">
           <div class="reghistory0">
-            <RegisterHistory
-              :register_history="register_history_0"
-              :counter="counter_0"
-              :register_number="0"
-            />
+            <Registers :registers_content="registers_0" :register_number="0" />
           </div>
           <div class="reghistory1">
-            <RegisterHistory
-              :register_history="register_history_1"
-              :counter="counter_1"
-              :register_number="1"
-            />
+            <Registers :registers_content="registers_1" :register_number="1" />
           </div>
           <div class="la_text">
             <div class="text">
@@ -307,6 +299,7 @@
     <div div v-show="show == 1" id="mem">
       <div class="memory"></div>
       <Memory :memory="memory" />
+      <Memory :memory="memory" />
     </div>
     <div div v-show="show == 2" id="c">
       <div class="cache"></div>
@@ -317,11 +310,11 @@
 
 <script>
 import PipelineHistory from "./components/PipelineHistory.vue";
-import RegisterHistory from "./components/RegisterHistory.vue";
 import Stats from "./components/Stats.vue";
 import Memory from "./components/Memory.vue";
 import Cache from "./components/Cache.vue";
 import axios from "axios";
+import Registers from "./components/Registers.vue";
 export default {
   name: "App",
   data() {
@@ -331,6 +324,8 @@ export default {
       register_history_0: [],
       pipeline_history_1: [],
       register_history_1: [],
+      registers_0: {},
+      registers_1: {},
       stats_0: [],
       stats_1: [],
       counter_0: 0,
@@ -351,7 +346,7 @@ export default {
   },
   components: {
     PipelineHistory,
-    RegisterHistory,
+    Registers,
     Stats,
     Memory,
     Cache,
@@ -365,13 +360,15 @@ export default {
       return data;
     },
     async fetchRegisterHistory0() {
-      const res = await fetch("http://127.0.0.1:5000/core/0/reg", {});
+      const res = await fetch("http://127.0.0.1:5000/core/0/reg", {
+        credentials: "include",
+      });
       const data = await res.json();
       return data;
     },
     async fetchPipelineHistory1() {
       const res = await fetch("http://127.0.0.1:5000/core/1/pipe", {
-        credentials: "same-origin",
+        credentials: "include",
       });
       const data = await res.json();
       return data;
@@ -405,6 +402,7 @@ export default {
       return data;
     },
     async fetchInitialMemory() {
+    async fetchInitialMemory() {
       const res = await fetch("http://127.0.0.1:5000/initialmem", {
         credentials: "include",
       });
@@ -412,11 +410,12 @@ export default {
       console.log(data);
       return data;
     },
-    // async initialize(){
-    //   for(let i = 0; i < 1024; i++){
-    //     this.$set(this.memory, i, 0);
-    //   }
-    // },
+    async initialize() {
+      for (let i = 0; i < 32; i++) {
+        this.$set(this.registers_0, i, 0);
+        this.$set(this.registers_1, i, 0);
+      }
+    },
     async postRunRequest() {
       clearInterval(this.interval);
       let pipe = false,
@@ -451,6 +450,7 @@ export default {
         this.stats_0 = await this.fetchStats0();
         this.stats_1 = await this.fetchStats1();
         this.memory = await this.fetchInitialMemory();
+        await this.initialize();
         this.display_stats_0 = false;
         this.display_stats_1 = false;
         this.play_0 = true;
@@ -478,6 +478,7 @@ export default {
             clearInterval(this.interval);
           }
           this.update_memory();
+          this.update_registers();
         }, document.getElementById("delay").value);
       } catch (error) {
         console.log(error);
@@ -493,18 +494,33 @@ export default {
     },
     update_memory() {
       if (this.counter_0 in this.memory_history[0]) {
+    update_memory() {
+      if (this.counter_0 in this.memory_history[0]) {
         let res = this.memory_history[0][this.counter_0];
         this.memory[res[0]] = res[1];
+        console.log(res[1]);
       }
+      if (this.counter_1 in this.memory_history[1]) {
       if (this.counter_1 in this.memory_history[1]) {
         let res = this.memory_history[1][this.counter_1];
         this.memory[res[0]] = res[1];
+        console.log(res[1]);
+      }
+    },
+    update_registers() {
+      if (this.counter_0 in this.register_history_0) {
+        let res = this.register_history_0[this.counter_0];
+        this.registers_0[res[0]] = res[1];
+      }
+      if (this.counter_1 in this.register_history_1) {
+        let res = this.register_history_1[this.counter_1];
+        this.registers_1[res[0]] = res[1];
       }
     },
   },
-  // async mounted(){
-  //   await this.initialize();
-  // },
+  async mounted() {
+    await this.initialize();
+  },
   async created() {
     fetch("http://127.0.0.1:5000/clear");
     this.register_history_0 = await this.fetchRegisterHistory0();
@@ -546,6 +562,10 @@ h1 {
   display: flex;
   font-size: 20px;
   padding: 5px 0px 0px 5px;
+}
+.root {
+  height: 100vh;
+  width: 100vw;
 }
 .content {
   display: flex;

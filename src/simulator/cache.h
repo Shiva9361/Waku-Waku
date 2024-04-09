@@ -20,19 +20,23 @@ private:
     int hits;
     int misses;
     int policy;
-    cache_type cache; // each vector is a block and has it's own recency
-    std::vector<cache_type> cache_states;
+    cache_type cache; // each vector is a block and has it's own recency, -1 recency denotes invalid
+    std::unordered_map<int, std::vector<std::pair<int, int>>> cache_states;
 
 public:
     Cache(int cache_size, int block_size, int associativity, int policy);
-    std::pair<int, bool> read(int address, int *memory);
-    void write(int address, int data);
+    std::pair<int, bool> read(int address, int *memory, int cycle);
+    void write(int address, int data, int cycle);
     void LRU(std::vector<int> block, set_type &set, int tag);
     void RRP(std::vector<int> block, set_type &set, int tag);
-    std::vector<cache_type> getCache();
-    void writeCacheState();
+    std::unordered_map<int, std::vector<std::pair<int, int>>> getCache();
+    std::pair<int, int> getHitsMisses();
+    void writeCacheState(int data, int cycle, int location);
 };
-
+std::pair<int, int> Cache::getHitsMisses()
+{
+    return {hits, misses};
+}
 Cache::Cache(int cache_size, int block_size, int associativity, int policy)
 {
     this->cache_size = cache_size;
@@ -56,32 +60,32 @@ Cache::Cache(int cache_size, int block_size, int associativity, int policy)
     set.resize(associativity, {-1, {block, -1}});
     cache.resize(sets, set);
 
-#ifdef DEBUG
-    for (auto i : cache)
-    {
-        for (auto j : i)
-        {
-            auto x = j.second;
-            for (auto k : x.first)
-            {
-                std::cout << k << " " << x.second << " ";
-            }
-            std::cout << std::endl;
-        }
-        std::cout << std::endl;
-    }
-#endif
+    // #ifdef DEBUG
+    //     for (auto i : cache)
+    //     {
+    //         for (auto j : i)
+    //         {
+    //             auto x = j.second;
+    //             for (auto k : x.first)
+    //             {
+    //                 std::cout << k << " " << x.second << " ";
+    //             }
+    //             std::cout << std::endl;
+    //         }
+    //         std::cout << std::endl;
+    //     }
+    // #endif
 }
 
-std::vector<cache_type> Cache::getCache()
+std::unordered_map<int, std::vector<std::pair<int, int>>> Cache::getCache()
 {
     return cache_states;
 }
-void Cache::writeCacheState()
+void Cache::writeCacheState(int data, int cycle, int location)
 {
-    cache_states.push_back(cache);
+    cache_states[cycle].push_back({data, location});
 }
-std::pair<int, bool> Cache::read(int address, int *memory)
+std::pair<int, bool> Cache::read(int address, int *memory, int cycle)
 {
 
     int tag = address >> (32 - number_of_tag_bits);
@@ -103,9 +107,11 @@ std::pair<int, bool> Cache::read(int address, int *memory)
         hits++;
         for (auto block = cache[index].begin(); block != cache[index].end(); block++)
         {
-            block->second.second++;
+            if (block->second.second != -1)
+                block->second.second++;
         }
         cache[index][tag2].second.second = 1;
+        return {cache[index][tag2].second.first[offset], true};
     }
     else
     {
@@ -123,7 +129,8 @@ std::pair<int, bool> Cache::read(int address, int *memory)
 
         for (auto block = cache[index].begin(); block != cache[index].end(); block++)
         {
-            block->second.second++;
+            if (block->second.second != -1)
+                block->second.second++;
         }
         for (int i = 0; i < cache[index].size(); i++)
         {
@@ -150,8 +157,13 @@ std::pair<int, bool> Cache::read(int address, int *memory)
         }
         std::cout << std::endl;
     }
+    std::cout << "eoc";
 #endif
-    writeCacheState();
+    for (int i = 0; i < block_size; i++)
+    {
+        writeCacheState(cache[index][tag2].second.first[i], cycle, index * sets + tag2 * associativity + i);
+    }
+
     return {cache[index][tag2].second.first[offset], false};
 }
 
@@ -168,7 +180,7 @@ void Cache::LRU(std::vector<int> block, set_type &set, int tag)
     {
         if (i->second.second == -1)
         {
-            set[itr - set.begin()] = {tag, {block, 1}};
+            set[i - set.begin()] = {tag, {block, 1}};
             return;
         }
         else if (i->second.second > MRU)
@@ -186,7 +198,7 @@ void Cache::RRP(std::vector<int> block, set_type &set, int tag)
     set[index] = {tag, {block, 1}};
 }
 
-void Cache::write(int address, int data)
+void Cache::write(int address, int data, int cycle)
 {
     int tag = address >> (32 - number_of_tag_bits);
     int offset = address & ((1 << number_of_offset_bits) - 1);
@@ -208,16 +220,18 @@ void Cache::write(int address, int data)
         hits++;
         for (auto block = cache[index].begin(); block != cache[index].end(); block++)
         {
-            block->second.second++;
+            if (block->second.second != -1)
+                block->second.second++;
         }
         cache[index][tag2].second.second = 1;
         cache[index][tag2].second.first[offset] = data;
+
+        writeCacheState(cache[index][tag2].second.first[offset], cycle, index * sets + tag2 * associativity + offset);
     }
     else
     {
         misses++;
     }
 
-    writeCacheState();
     // We are not fetching if it is not there. We just update memory.
 }
