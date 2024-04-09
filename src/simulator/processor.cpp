@@ -40,9 +40,9 @@ public:
     void process_pipeline_with_forwarding(int &hazard_count, std::vector<State> &states, std::map<std::string, int> latencies, int core, long long int &stall_count, bool &all_dummy);
 
     std::vector<std::map<std::string, float>> getStats();
-    std::vector<std::unordered_map<int, std::pair<int, int>>> getMemory();
+    std::vector<incremental_data> getMemory();
+    std::vector<incremental_data> getRegisters();
     std::vector<std::vector<std::map<std::string, std::string>>> getPipeline();
-    std::vector<std::vector<std::map<std::string, std::string>>> getRegisters();
     std::unordered_map<int, std::vector<std::pair<int, int>>> getCache();
     std::unordered_map<int, int> getInitialMemory();
 };
@@ -117,11 +117,11 @@ Processor::Processor(std::string file1, std::string file2, bool pipeline, bool f
         run_unpipelined(instructions1.size(), instructions2.size(), latencies);
     }
 }
-std::vector<std::vector<std::map<std::string, std::string>>> Processor::getRegisters()
+std::vector<std::unordered_map<int, std::pair<int, int>>> Processor::getRegisters()
 {
-    std::vector<std::vector<std::map<std::string, std::string>>> register_states;
-    register_states.push_back(cores[0].register_states);
-    register_states.push_back(cores[1].register_states);
+    std::vector<std::unordered_map<int, std::pair<int, int>>> register_states;
+    register_states.push_back(cores[0].register_states_incremental);
+    register_states.push_back(cores[1].register_states_incremental);
     return register_states;
 }
 std::vector<std::vector<std::map<std::string, std::string>>> Processor::getPipeline()
@@ -209,7 +209,7 @@ void Processor::evaluate(std::vector<State> &pipelined_instructions, int core, s
     // clock++;
     clocks[core]++;
 
-    cores[core].writeback(pipelined_instructions[0], instruction_count[core]);
+    cores[core].writeback(pipelined_instructions[0], instruction_count[core], clocks[core]);
 
     cores[core].mem(pipelined_instructions[1], memory, cache, memory_states[core], clocks[core]);
 
@@ -417,7 +417,6 @@ void Processor::process_pipeline_wo_forwarding(int &hazard_count, std::vector<St
             }
         }
     }
-    cores[core].savereg();
 }
 void Processor::run_pipelined_wo_forwarding(std::map<std::string, int> latencies)
 {
@@ -537,7 +536,6 @@ void Processor::process_pipeline_with_forwarding(int &hazard_count, std::vector<
             }
         }
     }
-    cores[core].savereg();
 }
 void Processor::run_pipelined_with_forwarding(std::map<std::string, int> latencies)
 {

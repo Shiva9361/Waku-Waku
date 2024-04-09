@@ -461,6 +461,10 @@ h1 {
   font-size: 20px;
   padding: 5px 0px 0px 5px;
 }
+.root {
+  height: 100vh;
+  width: 100vw;
+}
 .content {
   display: flex;
 }

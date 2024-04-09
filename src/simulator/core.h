@@ -1,6 +1,8 @@
 #include "hazardDetector.h"
 #include "cache.h"
 
+#define incremental_data std::unordered_map<int, std::pair<int, int>>
+
 int bin_to_int(std::string bin)
 {
     int n = bin.length();
@@ -46,19 +48,27 @@ private:
 public:
     int pc;
     Core(int pc, int dataloc);
+    /*
+        Unpipelined
+    */
     void savereg();
     void fetch(int *memory);
-    void fetch(int *memory, State &instruction, Cache *cache, int cycle);
     void decode();
-    void decode(State &state);
     int execute(std::map<std::string, int> latencies, int &counter);
-    void execute(State &instruction);
     void mem(int *memory);
+    std::vector<std::map<std::string, std::string>> register_states;
+    /*
+        Pipelined
+    */
+    void fetch(int *memory, State &instruction, Cache *cache, int cycle);
+    void decode(State &state);
+    void execute(State &instruction);
     void mem(State &instruction, int *memory, Cache *cache, std::unordered_map<int, std::pair<int, int>> &memorystate, int cycle);
-    void writeback(State &instruction, int &instruction_count);
+    void writeback(State &instruction, int &instruction_count, int core);
+
     bool predict(int pc);
 
-    std::vector<std::map<std::string, std::string>> register_states;
+        incremental_data register_states_incremental;
 };
 
 Core::Core(int pc, int dataloc)
@@ -706,7 +716,7 @@ void Core::mem(State &state, int *memory, Cache *cache, std::unordered_map<int, 
     state.m_fetched = true;
 }
 
-void Core::writeback(State &state, int &instruction_count)
+void Core::writeback(State &state, int &instruction_count, int cycle)
 {
     if (state.is_dummy)
     {
@@ -716,6 +726,7 @@ void Core::writeback(State &state, int &instruction_count)
     if (state.write && state.rd != 0)
     {
         registers[state.rd] = state.temp_reg;
+        register_states_incremental[cycle] = {state.rd, registers[state.rd]};
 #ifdef PRINT
         std::cout << "Wrote " << state.temp_reg << " to " << state.rd << std::endl;
 #endif

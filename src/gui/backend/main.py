@@ -1,15 +1,31 @@
+"""
+Importing Required modules including 
+the module built using pybind11
+"""
+import processor as p
 from flask import Flask, jsonify, request, session, render_template
 from flask_session import Session
 import os
-import processor as p
 from datetime import timedelta
 
+"""
+Configuring the flask app to use Sessions
+Sessions allow us to store data for specific 
+users seperately
+"""
 app = Flask(__name__)
 app.secret_key = "not_so_secreta"
 app.config["SESSION_TYPE"] = "filesystem"
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=5)
 
 Session(app)
+
+
+"""
+A function to parse the form data sent by 
+Frontend as this parsing is significantly 
+more difficult in CPP
+"""
 
 
 def preAssembler(file):
@@ -27,9 +43,6 @@ def preAssembler(file):
             final_data.append(" ".join(tokens))
     with open(file, "w") as writefile:
         writefile.writelines(final_data)
-
-
-preAssembler("codes/hazard.s")
 
 
 def clear_cores_reg():
@@ -72,9 +85,19 @@ def clear_cores_reg():
     return clear_reg_states
 
 
+"""
+The default route of the website
+"""
+
+
 @app.route("/")
 def index():
     return render_template("index.html")
+
+
+"""
+A route to load instructions and data into memory
+"""
 
 
 @app.route("/initialmem")
@@ -84,11 +107,23 @@ def initial_mem():
     return session["initmem"]
 
 
+"""
+A route that returns changes to be done to memory
+and at which cycle the change must be done 
+"""
+
+
 @app.route('/mem')
 def memory():
     if "memory" not in session:
         session["memory"] = []
     return session["memory"]
+
+
+"""
+A route that returns changes to be done to cache
+and at which cycle the change must be done 
+"""
 
 
 @app.route('/cache')
@@ -98,17 +133,33 @@ def cache():
     return session["cache"]
 
 
+"""
+A route that clears all data in session 
+"""
+
+
 @app.route('/clear')
 def clear():
     session.permanent = True
-    session["core1_reg_states"] = clear_cores_reg()
-    session["core0_reg_states"] = clear_cores_reg()
-    session["core0_pipeline_states"] = []
-    session["core1_pipeline_states"] = []
-    session["core0_stats"] = {}
-    session["core1_stats"] = {}
-    session["memory"] = [{str(i): 0 for i in range(1024)}]
+    """
+    Poping all previous data
+    """
+    pop_data = ["core0_pipeline_state", "core1_pipeline_state",
+                "core1_reg_states", "core0_reg_states", "core0_stats", "core1_stats", "memory"]
+    for _ in pop_data:
+        if _ in session:
+            session.pop(_)
+    session["initmem"] = [{str(i): 0 for i in range(1024)}]
+    session.pop("memory")
+
     return {"message": "done"}
+
+
+"""
+A route that gets the data from form,
+runs the data in processor and updates the 
+states to be used in frontend 
+"""
 
 
 @app.route('/run', methods=["POST"])
@@ -154,7 +205,6 @@ def run():
             session["core0_stats"] = stats[0]
             session["core1_stats"] = stats[1]
 
-            print(stats[2]["hits"]/(stats[2]["hits"]+stats[2]["misses"]))
             session["cache"] = processor.getCache()
             session["memory"] = processor.getMemory()
 
@@ -167,25 +217,36 @@ def run():
                 session["core0_pipeline_states"] = pipeline_states[0]
                 session["core1_pipeline_states"] = pipeline_states[1]
         except Exception as error:
-            print("hi")
             print(error)
             clear()
 
     return {"message": "Done"}
 
 
+"""
+Routes to get the incremental register states
+of both cores 
+"""
+
+
 @app.route('/core/0/reg')
 def core0_reg():
     if "core0_reg_states" not in session:
-        session["core0_reg_states"] = clear_cores_reg()
+        session["core0_reg_states"] = {}
     return jsonify(session["core0_reg_states"])
 
 
 @app.route('/core/1/reg')
 def core1_reg():
     if "core1_reg_states" not in session:
-        session["core1_reg_states"] = clear_cores_reg()
+        session["core1_reg_states"] = {}
     return jsonify(session["core1_reg_states"])
+
+
+"""
+Routes to get the pipeline states
+of both cores 
+"""
 
 
 @app.route('/core/0/pipe')
@@ -200,6 +261,12 @@ def core1_pipe():
     if "core1_pipeline_states" not in session:
         session["core1_pipeline_states"] = []
     return jsonify(session["core1_pipeline_states"])
+
+
+"""
+Routes to get the stats
+of both cores 
+"""
 
 
 @app.route('/core/0/stats')
