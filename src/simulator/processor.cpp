@@ -43,7 +43,7 @@ public:
     std::vector<incremental_data> getMemory();
     std::vector<incremental_data> getRegisters();
     std::vector<std::vector<std::map<std::string, std::string>>> getPipeline();
-    std::unordered_map<int, std::vector<std::pair<int, int>>> getCache();
+    std::unordered_map<int, std::pair<int, std::vector<std::pair<int, int>>>> getCache();
     std::unordered_map<int, int> getInitialMemory();
 };
 
@@ -136,7 +136,7 @@ std::vector<std::unordered_map<int, std::pair<int, int>>> Processor::getMemory()
 {
     return memory_states;
 }
-std::unordered_map<int, std::vector<std::pair<int, int>>> Processor::getCache()
+std::unordered_map<int, std::pair<int, std::vector<std::pair<int, int>>>> Processor::getCache()
 {
     return cache->getCache();
 }

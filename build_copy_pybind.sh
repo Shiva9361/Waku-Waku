@@ -1,7 +1,7 @@
 #!/bin/bash
-if [ -d build ] then;
+if [ -d build ]; then
     cd build;
-else 
+else
     mkdir build;
     cd build;
 fi

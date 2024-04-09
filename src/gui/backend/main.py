@@ -45,46 +45,6 @@ def preAssembler(file):
         writefile.writelines(final_data)
 
 
-def clear_cores_reg():
-    clear_reg_states = [
-        {
-            "0": "0",
-            "1": "0",
-            "10": "0",
-            "11": "0",
-            "12": "0",
-            "13": "0",
-            "14": "0",
-            "15": "0",
-            "16": "0",
-            "17": "0",
-            "18": "0",
-            "19": "0",
-            "2": "0",
-            "20": "0",
-            "21": "0",
-            "22": "0",
-            "23": "0",
-            "24": "0",
-            "25": "0",
-            "26": "0",
-            "27": "0",
-            "28": "0",
-            "29": "0",
-            "3": "0",
-            "30": "0",
-            "31": "0",
-            "4": "0",
-            "5": "0",
-            "6": "0",
-            "7": "0",
-            "8": "0",
-            "9": "0"
-        }
-    ]
-    return clear_reg_states
-
-
 """
 The default route of the website
 """
@@ -184,9 +144,15 @@ def run():
 
             latencies = {"addi": int(request.form['addi']), "add": int(request.form['add']),
                          "div": int(request.form['div']), "mul": int(request.form['mul']), "sub": int(request.form['sub']), "fmiss": 4, "fhit": 2, "mhit": 2, "mmiss": 1}
-            print("hi")
+
+            # cache_properties = [int(request.form['cache_size']), int(
+            #     request.form['block_size']), int(request.form['associativity'])]
+
+            # cache_properties.append(0) if request.form(
+            #     'lru') == "true" else cache_properties.append(1)
+
             processor = p.Processor(
-                file0, file1, request.form["pipeline"] == "true", request.form["forward"] == "true", latencies, [64, 8, 4, 1])
+                file0, file1, request.form["pipeline"] == "true", request.form["forward"] == "true", latencies, [64, 8, 4, 0])
             clear()
             stats = processor.getStats()
             print()
