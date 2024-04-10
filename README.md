@@ -1,5 +1,11 @@
 # Waku-Waku
 
+Please don't run the build_frontend script,
+you will have to manually modify index.html to make
+everything work again
+
+Also prefer running in linux/docker
+
 ## 7/04/2024 11:00 pm
 
 We made frontend for cache and memory.
@@ -14,7 +20,7 @@ We implemented Write through and No-write allocate policies.
 We implemented the LRU cache replacement policy.
 We were thinking of what other policy to implement. Then we implemented Random replacement policy.
 We came to know that even ripes has the same policies(lol).
-Later that night we added stalls for the IF and MEM stages. 
+Later that night we added stalls for the IF and MEM stages.
 Cache is working fine. Spent lesser time than the previous phases
 
 ## 26/03/2024 10:45 pm
