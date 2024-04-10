@@ -1,9 +1,26 @@
 # Waku-Waku
 
+## 7/04/2024 11:00 pm
+
+We made frontend for cache and memory.
+We saw that it was very slow as we were sending all the states.
+So we made it incremental and rendered it based on clock cycles.
+Darshan added docker file, requirements and dependencies.
+
+## 31/03/2024 8:00 pm
+
+We added cache. We are storing both the addresses and data in the cache.
+We implemented Write through and No-write allocate policies.
+We implemented the LRU cache replacement policy.
+We were thinking of what other policy to implement. Then we implemented Random replacement policy.
+We came to know that even ripes has the same policies(lol).
+Later that night we added stalls for the IF and MEM stages. 
+Cache is working fine. Spent lesser time than the previous phases
+
 ## 26/03/2024 10:45 pm
 
 Soo, we still haven't started phase 3, youtube recomended me some videos related to pybind11, to import cpp to
-python, which got my atttention. As i have nothing to go after messing up test2, I dove into the rabbit hole,
+python, which got my atttention. As I have nothing to do after messing up test2, I dove into the rabbit hole,
 ended up adding pybind support and directly importing the processor into python.
 
 The problem with the gui was the use of global variables which would never work if we wanted to deploy this project,
