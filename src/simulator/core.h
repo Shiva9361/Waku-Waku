@@ -68,7 +68,7 @@ public:
 
     bool predict(int pc);
 
-        incremental_data register_states_incremental;
+    incremental_data register_states_incremental;
 };
 
 Core::Core(int pc, int dataloc)

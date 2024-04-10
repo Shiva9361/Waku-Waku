@@ -1,8 +1,8 @@
 <template>
   <div>
-    <div v-for="(value, key) in cache" :key="key">
-      <div class="c_key">{{ key }}</div>
-      <div class="c_value">{{ value }}</div>
+    <div v-for="(value2, key2) in cache" :key="key2">
+      <div class="c_key">{{ key2 }}</div>
+      <div class="c_value">{{ value2 }}</div>
     </div>
   </div>
 </template>
@@ -12,6 +12,7 @@ export default {
   name: "cacheComponent",
   props: {
     cache: Object,
+    split_cache: Object,
   },
 };
 </script>

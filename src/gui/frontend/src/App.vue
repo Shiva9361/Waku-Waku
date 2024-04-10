@@ -170,7 +170,7 @@
                     min="1"
                   />
                 </div>
-                <div>
+                <!-- <div>
                   <label>W/O Pipeline</label>
                   <input
                     style="margin: 5px"
@@ -178,7 +178,7 @@
                     id="no_pipe"
                     name="option"
                   />
-                </div>
+                </div> -->
                 <div>
                   <label>Pipelining</label>
                   <input
@@ -199,7 +199,7 @@
                   />
                 </div>
                 <div>
-                  <label>Delay</label>
+                  <label>Delay(ms)</label>
                   <input
                     style="margin: 5px"
                     type="number"
@@ -209,7 +209,7 @@
                   />
                 </div>
                 <div>
-                  <label>Cache Size</label>
+                  <label>Cache Size(B)</label>
                   <input
                     style="margin: 5px"
                     type="number"
@@ -219,7 +219,7 @@
                   />
                 </div>
                 <div>
-                  <label>Block Size</label>
+                  <label>Block Size(B)</label>
                   <input
                     style="margin: 5px"
                     type="number"
@@ -234,8 +234,8 @@
                     style="margin: 5px"
                     type="number"
                     id="associativity"
-                    value="0"
-                    min="0"
+                    value="1"
+                    min="1"
                   />
                 </div>
                 <div>
@@ -293,6 +293,14 @@
                 <Stats :stats="stats_1" :core_number="1" />
               </div>
             </div>
+            <div>
+              <div
+                class="container1"
+                v-if="display_stats_0 === true && display_stats_1 === true"
+              >
+                <Cachestats :stats="cache_stats" />
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -303,7 +311,7 @@
     </div>
     <div div v-show="show == 2" id="c">
       <div class="cache"></div>
-      <Cache :cache="cache" />
+      <Cache :cache="cache" :split_cache="split_cache" />
     </div>
   </div>
 </template>
@@ -315,6 +323,7 @@ import Memory from "./components/Memory.vue";
 import Cache from "./components/Cache.vue";
 import axios from "axios";
 import Registers from "./components/Registers.vue";
+import Cachestats from "./components/Cachestats.vue";
 export default {
   name: "App",
   data() {
@@ -328,6 +337,7 @@ export default {
       registers_1: {},
       stats_0: [],
       stats_1: [],
+      cache_stats: [],
       counter_0: 0,
       counter_1: 0,
       play_0: false,
@@ -343,9 +353,10 @@ export default {
       mem_counter: 0,
       cache_history: [],
       cache: {},
+      split_cache: {},
       csize: 64,
       bsize: 8,
-      associativity: 0,
+      associativity: 1,
       show: 0,
     };
   },
@@ -355,6 +366,7 @@ export default {
     Stats,
     Memory,
     Cache,
+    Cachestats,
   },
   methods: {
     async fetchPipelineHistory0() {
@@ -420,13 +432,41 @@ export default {
       const data = await res.json();
       return data;
     },
+    async fetchCacheStats() {
+      const res = await fetch("http://127.0.0.1:5000/cachestats", {
+        credentials: "include",
+      });
+      const data = await res.json();
+      return data;
+    },
     async initialize() {
       for (let i = 0; i < 32; i++) {
         this.$set(this.registers_0, i, 0);
         this.$set(this.registers_1, i, 0);
       }
-      for(let i = 0; i < this.csize; i++){
-        this.$set(this.cache, i , 0);
+      for (let i = 0; i < this.csize; i++) {
+        this.$set(this.cache, i, 0);
+      }
+    },
+    splitCache() {
+      let block = {};
+      let set = {};
+      let set_i = 0;
+      for (let i = 0; i < this.cache.length; i++) {
+        if ((i + 1) % this.bsize == 0) {
+          set.push(block);
+          block = {};
+        } else {
+          block.push(this.cache[i]);
+        }
+        if (((i + 1) % this.csize) / this.associativity / this.block_size) {
+          this.$set(this.split_cache, set_i, set);
+          set = {};
+          set_i++;
+        } else {
+          block.push(this.cache[i]);
+          console.log(this.cache);
+        }
       }
     },
     async postRunRequest() {
@@ -439,7 +479,7 @@ export default {
         pipe = true;
         forward = true;
       }
-      if(document.getElementById("lru").checked) lru = true;
+      if (document.getElementById("lru").checked) lru = true;
       try {
         const formData = axios.toFormData({
           pipeline: pipe,
@@ -455,6 +495,10 @@ export default {
           cache_size: document.getElementById("csize").value,
           block_size: document.getElementById("bsize").value,
           associativity: document.getElementById("associativity").value,
+          mhit: document.getElementById("mhit").value,
+          mmiss: document.getElementById("mmiss").value,
+          ihit: document.getElementById("ihit").value,
+          imiss: document.getElementById("imiss").value,
         });
         await axios.post("http://127.0.0.1:5000/run", formData, {
           headers: {
@@ -473,6 +517,7 @@ export default {
         this.stats_0 = await this.fetchStats0();
         this.stats_1 = await this.fetchStats1();
         this.memory = await this.fetchInitialMemory();
+        this.cache_stats = await this.fetchCacheStats();
         await this.initialize();
         this.display_stats_0 = false;
         this.display_stats_1 = false;
@@ -484,13 +529,13 @@ export default {
         this.no_play_1 = false;
         this.is_running = true;
         this.interval = setInterval(() => {
-          if (this.counter_0 >= this.register_history_0.length - 1) {
+          if (this.counter_0 >= this.pipeline_history_0.length - 1) {
             this.play_0 = false;
             this.no_play_0 = true;
             this.display_stats_0 = true;
           }
           if (this.play_0) this.counter_0++;
-          if (this.counter_1 >= this.register_history_1.length - 1) {
+          if (this.counter_1 >= this.pipeline_history_1.length - 1) {
             this.play_1 = false;
             this.no_play_1 = true;
             this.display_stats_1 = true;
@@ -503,6 +548,7 @@ export default {
           this.update_memory();
           this.update_registers();
           this.update_cache();
+          this.splitCache();
         }, document.getElementById("delay").value);
       } catch (error) {
         console.log(error);
@@ -538,15 +584,22 @@ export default {
         this.registers_1[res[0]] = res[1];
       }
     },
-    update_cache(){
-      if(this.counter_0 in this.cache_history){
-        for(let i = 0; i < this.cache_history[this.counter_0][1].length; i++){
-          this.cache[this.cache_history[this.counter_0][1][i][1]] = this.cache_history[this.counter_0][1][i][0];
+    update_cache() {
+      if (this.counter_0 in this.cache_history) {
+        console.log(this.split_cache);
+        for (let i = 0; i < this.cache_history[this.counter_0][1].length; i++) {
+          this.cache[this.cache_history[this.counter_0][1][i][1]] =
+            this.cache_history[this.counter_0][1][i][0];
         }
       }
-      if(this.counter_1 in this.cache_history){
-        for(let i = 0; i < this.cache_history[this.counter_1][1].length; i++){
-          this.cache[this.cache_history[this.counter_1][1][i][1]] = this.cache_history[this.counter_0][1][i][0];
+      if (this.counter_1 in this.cache_history) {
+        for (let i = 0; i < this.cache_history[this.counter_1][1].length; i++) {
+          console.log(this.split_cache);
+          this.$set(
+            this.cache,
+            this.cache_history[this.counter_1][1][i][1],
+            this.cache_history[this.counter_1][1][i][0]
+          );
         }
       }
     },

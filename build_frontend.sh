@@ -1,4 +1,5 @@
 #!/bin/bash
+# prefer not to run 
 cd src/gui/frontend
 npm run build
 cd ../..

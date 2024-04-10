@@ -165,7 +165,7 @@ std::pair<int, bool> Cache::read(int address, int *memory, int cycle)
 #endif
     for (int i = 0; i < block_size; i++)
     {
-        writeCacheState(cache[index][tag2].second.first[i], cycle, index * sets + tag2 * associativity + i, tag, index);
+        writeCacheState(cache[index][tag2].second.first[i], cycle, index * associativity * block_size + tag2 * block_size + i, tag, index);
     }
 
     return {cache[index][tag2].second.first[offset], false};

@@ -93,6 +93,13 @@ def cache():
     return session["cache"]
 
 
+@app.route('/cachestats')
+def cache_stats():
+    if "cache_stats" not in session:
+        session["cache_stats"] = []
+    return session["cache_stats"]
+
+
 """
 A route that clears all data in session 
 """
@@ -105,11 +112,12 @@ def clear():
     Poping all previous data
     """
     pop_data = ["core0_pipeline_state", "core1_pipeline_state",
-                "core1_reg_states", "core0_reg_states", "core0_stats", "core1_stats", "memory"]
+                "core1_reg_states", "core0_reg_states", "core0_stats",
+                "core1_stats", "memory", "cache_stats"]
     for _ in pop_data:
         if _ in session:
             session.pop(_)
-    session["initmem"] = [{str(i): 0 for i in range(1024)}]
+    session["initmem"] = {str(i): 0 for i in range(1024)}
 
     return {"message": "done"}
 
@@ -142,17 +150,21 @@ def run():
                 preAssembler("codes/slot1.s")
                 file1 = "codes/slot1.s"
 
-            latencies = {"addi": int(request.form['addi']), "add": int(request.form['add']),
-                         "div": int(request.form['div']), "mul": int(request.form['mul']), "sub": int(request.form['sub']), "fmiss": 4, "fhit": 2, "mhit": 2, "mmiss": 1}
+            latencies = {"addi": int(request.form['addi']), "add": int(request.form['add']), "div": int(request.form['div']),
+                         "mul": int(request.form['mul']), "sub": int(request.form['sub']), "fmiss": int(request.form['imiss']),
+                         "fhit": int(request.form['ihit']), "mhit": int(request.form['mhit']), "mmiss": int(request.form['mmiss'])}
 
-            # cache_properties = [int(request.form['cache_size']), int(
-            #     request.form['block_size']), int(request.form['associativity'])]
+            cache_properties = [int(request.form['cache_size']),
+                                int(request.form['block_size']),
+                                int(request.form['associativity'])]
 
-            # cache_properties.append(0) if request.form(
-            #     'lru') == "true" else cache_properties.append(1)
+            if request.form['lru'] == "true":
+                cache_properties.append(0)
+            else:
+                cache_properties.append(1)
 
             processor = p.Processor(
-                file0, file1, request.form["pipeline"] == "true", request.form["forward"] == "true", latencies, [64, 8, 4, 0])
+                file0, file1, request.form["pipeline"] == "true", request.form["forward"] == "true", latencies, cache_properties)
             clear()
             stats = processor.getStats()
             print()
@@ -169,6 +181,14 @@ def run():
             session["initmem"] = initial_mem
             session["core0_stats"] = stats[0]
             session["core1_stats"] = stats[1]
+
+            cache_stats = {}
+            print(stats[2]["hits"], stats[2]["misses"])
+            cache_stats["hit-rate"] = round(stats[2]["hits"] /
+                                            (stats[2]["hits"]+stats[2]["misses"]) * 100, 2) if (stats[2]["hits"]+stats[2]["misses"]) > 0 else 0
+            cache_stats["miss-rate"] = round(stats[2]["misses"] /
+                                             (stats[2]["hits"]+stats[2]["misses"]) * 100, 2) if (stats[2]["hits"]+stats[2]["misses"]) > 0 else 0
+            session["cache_stats"] = cache_stats
 
             session["cache"] = processor.getCache()
             session["memory"] = processor.getMemory()
@@ -244,7 +264,7 @@ def core0_stats_fun():
 @app.route('/core/1/stats')
 def core1_stats_fun():
     if "core1_stats" not in session:
-        session["core0_stats"] = []
+        session["core1_stats"] = []
     return jsonify(session["core1_stats"])
 
 
