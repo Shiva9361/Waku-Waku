@@ -6,6 +6,7 @@
 #define block_type std::pair<std::vector<int>, int>
 #define set_type std::vector<std::pair<int, block_type>>
 #define cache_type std::vector<set_type>
+#define cache_state_type std::unordered_map<int, std::pair<std::vector<int>, std::vector<std::pair<int, int>>>>
 class Cache
 {
 private:
@@ -21,7 +22,7 @@ private:
     int misses;
     int policy;
     cache_type cache; // each vector is a block and has it's own recency, -1 recency denotes invalid
-    std::unordered_map<int, std::pair<int, std::vector<std::pair<int, int>>>> cache_states;
+    cache_state_type cache_states;
 
 public:
     Cache(int cache_size, int block_size, int associativity, int policy);
@@ -29,9 +30,9 @@ public:
     void write(int address, int data, int cycle);
     void LRU(std::vector<int> block, set_type &set, int tag);
     void RRP(std::vector<int> block, set_type &set, int tag);
-    std::unordered_map<int, std::pair<int, std::vector<std::pair<int, int>>>> getCache();
+    cache_state_type getCache();
     std::pair<int, int> getHitsMisses();
-    void writeCacheState(int data, int cycle, int location, int tag);
+    void writeCacheState(int data, int cycle, int location, int tag, int index);
 };
 std::pair<int, int> Cache::getHitsMisses()
 {
@@ -77,13 +78,15 @@ Cache::Cache(int cache_size, int block_size, int associativity, int policy)
     // #endif
 }
 
-std::unordered_map<int, std::pair<int, std::vector<std::pair<int, int>>>> Cache::getCache()
+cache_state_type Cache::getCache()
 {
     return cache_states;
 }
-void Cache::writeCacheState(int data, int cycle, int location, int tag)
+void Cache::writeCacheState(int data, int cycle, int location, int tag, int index)
 {
-    cache_states[cycle].first = tag;
+    cache_states[cycle].first.resize(2);
+    cache_states[cycle].first[0] = index;
+    cache_states[cycle].first[1] = tag;
     cache_states[cycle].second.push_back({data, location});
 }
 std::pair<int, bool> Cache::read(int address, int *memory, int cycle)
@@ -162,7 +165,7 @@ std::pair<int, bool> Cache::read(int address, int *memory, int cycle)
 #endif
     for (int i = 0; i < block_size; i++)
     {
-        writeCacheState(cache[index][tag2].second.first[i], cycle, index * sets + tag2 * associativity + i, tag);
+        writeCacheState(cache[index][tag2].second.first[i], cycle, index * sets + tag2 * associativity + i, tag, index);
     }
 
     return {cache[index][tag2].second.first[offset], false};
@@ -227,7 +230,7 @@ void Cache::write(int address, int data, int cycle)
         cache[index][tag2].second.second = 1;
         cache[index][tag2].second.first[offset] = data;
 
-        writeCacheState(cache[index][tag2].second.first[offset], cycle, index * associativity * block_size + tag2 * block_size + offset, tag);
+        writeCacheState(cache[index][tag2].second.first[offset], cycle, index * associativity * block_size + tag2 * block_size + offset, tag, index);
     }
     else
     {
