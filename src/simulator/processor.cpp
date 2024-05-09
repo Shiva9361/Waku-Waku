@@ -40,6 +40,7 @@ public:
     void write_pipeline_state(int core, std::vector<State> states);
     void process_pipeline_wo_forwarding(int &hazard_count, std::vector<State> &states, std::map<std::string, int> latencies, int core, long long int &stall_count, bool &all_dummy);
     void process_pipeline_with_forwarding(int &hazard_count, std::vector<State> &states, std::map<std::string, int> latencies, int core, long long int &stall_count, bool &all_dummy);
+    void resolve_branch_instructions(std::vector<State> &states, long long int &stall_count);
     /*
         GUI Specific functions
     */
@@ -143,6 +144,55 @@ std::vector<std::unordered_map<int, std::pair<int, int>>> Processor::getMemory()
 cache_state_type Processor::getCache()
 {
     return cache->getCache();
+}
+void Processor::resolve_branch_instructions(std::vector<State> &states, long long int &stall_count)
+{
+    bool flush = false;
+    if (!states[2].is_dummy)
+    {
+        if (states[1].next_pc == states[2].pc)
+        {
+            states.push_back(State(states[3].next_pc));
+            if (memory[states[3].next_pc] == 0)
+            {
+                states[4].is_dummy = true;
+            }
+
+            branchPredictor.add(states[1]);
+            branchPredictor.update(true);
+        }
+        else
+        {
+            flush = true;
+        }
+    }
+    else if (!states[3].is_dummy)
+    {
+        if (states[1].next_pc == states[3].pc)
+        {
+            states.push_back(State(states[3].next_pc));
+            if (memory[states[3].next_pc] == 0)
+            {
+                states[4].is_dummy = true;
+            }
+
+            branchPredictor.add(states[1]);
+            branchPredictor.update(true);
+        }
+        else
+        {
+            flush = true;
+        }
+    }
+    if (flush)
+    {
+        states[2].is_dummy = true;
+        states[3].is_dummy = true;
+        states.push_back(State(states[1].next_pc));
+        stall_count += 2;
+        branchPredictor.add(states[1]);
+        branchPredictor.update(false);
+    }
 }
 void Processor::write_pipeline_state(int core, std::vector<State> states)
 {
@@ -371,11 +421,7 @@ void Processor::process_pipeline_wo_forwarding(int &hazard_count, std::vector<St
     }
     else if ((states[1].opcode == "1101111" || states[1].opcode == "1100011") && !states[1].is_dummy)
     {
-        // Flush
-        states[2].is_dummy = true;
-        states[3].is_dummy = true;
-        states.push_back(State(states[1].next_pc));
-        stall_count += 2;
+        resolve_branch_instructions(states, stall_count);
     }
     else if ((states[1].opcode == "0110011" || states[1].opcode == "0010011") && states[1].latency > 0 && !states[1].is_dummy)
     {
@@ -471,52 +517,7 @@ void Processor::process_pipeline_with_forwarding(int &hazard_count, std::vector<
     }
     else if ((states[1].opcode == "1101111" || states[1].opcode == "1100011") && !states[1].is_dummy)
     {
-        bool flush = false;
-        if (!states[2].is_dummy)
-        {
-            if (states[1].next_pc == states[2].pc)
-            {
-                states.push_back(State(states[3].next_pc));
-                if (memory[states[3].next_pc] == 0)
-                {
-                    states[4].is_dummy = true;
-                }
-
-                branchPredictor.add(states[1]);
-                branchPredictor.update(true);
-            }
-            else
-            {
-                flush = true;
-            }
-        }
-        else if (!states[3].is_dummy)
-        {
-            if (states[1].next_pc == states[3].pc)
-            {
-                states.push_back(State(states[3].next_pc));
-                if (memory[states[3].next_pc] == 0)
-                {
-                    states[4].is_dummy = true;
-                }
-
-                branchPredictor.add(states[1]);
-                branchPredictor.update(true);
-            }
-            else
-            {
-                flush = true;
-            }
-        }
-        if (flush)
-        {
-            states[2].is_dummy = true;
-            states[3].is_dummy = true;
-            states.push_back(State(states[1].next_pc));
-            stall_count += 2;
-            branchPredictor.add(states[1]);
-            branchPredictor.update(false);
-        }
+        resolve_branch_instructions(states, stall_count);
     }
     else if (if_stall)
     {
