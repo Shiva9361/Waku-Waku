@@ -183,7 +183,6 @@ def run():
             session["core1_stats"] = stats[1]
 
             cache_stats = {}
-            print(stats[2]["hits"], stats[2]["misses"])
             cache_stats["hit-rate"] = round(stats[2]["hits"] /
                                             (stats[2]["hits"]+stats[2]["misses"]) * 100, 2) if (stats[2]["hits"]+stats[2]["misses"]) > 0 else 0
             cache_stats["miss-rate"] = round(stats[2]["misses"] /
