@@ -3,6 +3,7 @@
 #include <iostream>
 #include "core.h"
 #include "assembler.h"
+#include "branchPredictor.h"
 #include <string>
 
 namespace py = pybind11;
@@ -26,6 +27,7 @@ private:
     std::vector<std::vector<std::map<std::string, std::string>>> pipeline_states;
     std::vector<std::unordered_map<int, std::pair<int, int>>> memory_states;
     std::unordered_map<int, int> initial_memory;
+    BranchPredictor branchPredictor;
 
 public:
     Processor(std::string file1, std::string file2, bool pipeline, bool forwarding, std::map<std::string, int> latencies, std::vector<int> cache_parameters);
@@ -220,6 +222,8 @@ void Processor::evaluate(std::vector<State> &pipelined_instructions, int core, s
     cores[core].decode(pipelined_instructions[3]);
 
     cores[core].fetch(memory, pipelined_instructions[4], cache, clocks[core]);
+
+    branchPredictor.predict(pipelined_instructions[4]);
 
     pipelined_instructions.erase(pipelined_instructions.begin());
 
@@ -465,28 +469,11 @@ void Processor::process_pipeline_with_forwarding(int &hazard_count, std::vector<
         states[0].is_dummy = true;
         stall_count++;
     }
-    else if (if_stall)
+    else if ((states[1].opcode == "1101111" || states[1].opcode == "1100011") && !states[1].is_dummy)
     {
-        if (stall_pos == 0)
+        bool flush = false;
+        if (!states[2].is_dummy)
         {
-            states = {states[0], State(0), oldstates[2], oldstates[3], states[3]};
-            states[4].pc = states[3].next_pc;
-            states[1].is_dummy = true;
-            stall_count++;
-        }
-        else if (stall_pos == 1)
-        {
-            states = {states[0], states[1], State(0), oldstates[3], states[3]};
-            states[4].pc = states[3].next_pc;
-            states[2].is_dummy = true;
-            stall_count++;
-        }
-    }
-    else
-    {
-        if (states[1].opcode == "1101111" || states[1].opcode == "1100011")
-        {
-            // Flush
             if (states[1].next_pc == states[2].pc)
             {
                 states.push_back(State(states[3].next_pc));
@@ -494,19 +481,67 @@ void Processor::process_pipeline_with_forwarding(int &hazard_count, std::vector<
                 {
                     states[4].is_dummy = true;
                 }
+
+                branchPredictor.add(states[1]);
+                branchPredictor.update(true);
             }
             else
             {
-                states[2].is_dummy = true;
-                states[3].is_dummy = true;
-                states.push_back(State(states[1].next_pc));
-                stall_count += 2;
+                flush = true;
             }
         }
-        else if ((states[1].opcode == "0110011" || states[1].opcode == "0010011") && states[1].latency > 0 && !states[1].is_dummy)
+        else if (!states[3].is_dummy)
+        {
+            if (states[1].next_pc == states[3].pc)
+            {
+                states.push_back(State(states[3].next_pc));
+                if (memory[states[3].next_pc] == 0)
+                {
+                    states[4].is_dummy = true;
+                }
+
+                branchPredictor.add(states[1]);
+                branchPredictor.update(true);
+            }
+            else
+            {
+                flush = true;
+            }
+        }
+        if (flush)
+        {
+            states[2].is_dummy = true;
+            states[3].is_dummy = true;
+            states.push_back(State(states[1].next_pc));
+            stall_count += 2;
+            branchPredictor.add(states[1]);
+            branchPredictor.update(false);
+        }
+    }
+    else if (if_stall)
+    {
+        if (stall_pos == 0)
+        {
+            states = {states[0], State(0), oldstates[2], oldstates[3], states[3]};
+            // states[4].pc = states[3].next_pc;
+            states[1].is_dummy = true;
+            stall_count++;
+        }
+        else if (stall_pos == 1)
+        {
+            states = {states[0], states[1], State(0), oldstates[3], states[3]};
+            // states[4].pc = states[3].next_pc;
+            states[2].is_dummy = true;
+            stall_count++;
+        }
+    }
+    else
+    {
+
+        if ((states[1].opcode == "0110011" || states[1].opcode == "0010011") && states[1].latency > 0 && !states[1].is_dummy)
         {
             states = {states[0], State(0), states[1], oldstates[3], states[3]};
-            states[4].pc = states[3].next_pc;
+            // states[4].pc = states[3].next_pc;
             states[1].is_dummy = true;
             stall_count++;
         }

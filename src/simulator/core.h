@@ -108,14 +108,14 @@ void Core::fetch(int memory[], State &state, Cache *cache, int cycle)
     state.instruction = instruction_string;
     state.i_fetched = true;
 
-    if (!predict(state.pc))
-    {
-        state.next_pc = state.pc + 1;
-    }
-    else
-    {
-        // Nvm
-    }
+    // if (!predict(state.pc))
+    // {
+    //     state.next_pc = state.pc + 1;
+    // }
+    // else
+    // {
+    //     // Nvm
+    // }
 #ifdef PRINT
     std::cout << "fetched" << std::endl;
 #endif
@@ -463,7 +463,6 @@ void Core::execute(State &state)
     }
     else if (state.opcode == "1101111")
     {
-
         state.temp_reg = state.pc;
         int int_imm = state.imm;
 #ifdef PRINT
@@ -476,6 +475,7 @@ void Core::execute(State &state)
     }
     else if (state.opcode == "1100011")
     {
+        state.next_pc = state.pc + 1;
         if (state.func3 == "001")
         {
             if (registers[state.rs1] != registers[state.rs2])

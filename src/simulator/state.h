@@ -18,6 +18,7 @@ public:
     bool is_operand2;
     int temp_reg;
     bool write;
+    bool BTB_miss;
     int rd;
     int imm;
     int latency;
@@ -32,6 +33,7 @@ public:
     bool fetch_latency;
     bool mem_latency;
     bool is_mem_instruction;
+    bool predicted;
     State(int pc);
 };
 
@@ -56,4 +58,6 @@ State::State(int pc)
     fetch_latency = false;
     mem_latency = false;
     is_mem_instruction = false;
+    BTB_miss = false;
+    predicted = false;
 }
