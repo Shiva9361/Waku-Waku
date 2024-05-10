@@ -12,7 +12,6 @@ class Processor
 private:
     int memory[1024] = {0};
     Core cores[2] = {Core(0, 84), Core(856, 943)}; // .text is of size 84 words
-    Cache *cache;
     int clocks[2];
     int clock;
     bool all_dummy1;
@@ -44,7 +43,7 @@ public:
     /*
         GUI Specific functions
     */
-    cache_state_type getCache();
+    std::vector<cache_state_type> getCache();
     std::vector<std::map<std::string, float>> getStats();
     std::vector<incremental_data> getMemory();
     std::vector<incremental_data> getRegisters();
@@ -67,7 +66,8 @@ Processor::Processor(std::string file1, std::string file2, bool pipeline, bool f
     instruction_count[0] = 0;
     pipeline_states = {{},
                        {}};
-    cache = new Cache(cache_parameters[0], cache_parameters[1], cache_parameters[2], cache_parameters[3]);
+    cores[0].init_cache(cache_parameters[0], cache_parameters[1], cache_parameters[2], cache_parameters[3], 1);
+    cores[1].init_cache(cache_parameters[0], cache_parameters[1], cache_parameters[2], cache_parameters[3], 0);
     /*
         Initialize by adding programs to memory
     */
@@ -141,9 +141,12 @@ std::vector<std::unordered_map<int, std::pair<int, int>>> Processor::getMemory()
 {
     return memory_states;
 }
-cache_state_type Processor::getCache()
+std::vector<cache_state_type> Processor::getCache()
 {
-    return cache->getCache();
+    std::vector<cache_state_type> state;
+    state.push_back(cores[0].cache->getCache());
+    state.push_back(cores[1].cache->getCache());
+    return state;
 }
 void Processor::resolve_branch_instructions(std::vector<State> &states, long long int &stall_count)
 {
@@ -240,8 +243,10 @@ std::vector<std::map<std::string, float>> Processor::getStats()
     temp["SC"] = stall_count_1;
     temp["Clock"] = clocks[1];
     temp["IPC"] = (float)instruction_count[1] / clocks[1];
-    temp2["hits"] = cache->getHitsMisses().first;
-    temp2["misses"] = cache->getHitsMisses().second;
+    temp2["hits0"] = cores[0].cache->getHitsMisses().first;
+    temp2["misses0"] = cores[0].cache->getHitsMisses().second;
+    temp2["hits1"] = cores[1].cache->getHitsMisses().first;
+    temp2["misses1"] = cores[1].cache->getHitsMisses().second;
     stat.push_back(temp);
     stat.push_back(temp2);
     return stat;
@@ -265,13 +270,13 @@ void Processor::evaluate(std::vector<State> &pipelined_instructions, int core, s
 
     cores[core].writeback(pipelined_instructions[0], instruction_count[core], clocks[core]);
 
-    cores[core].mem(pipelined_instructions[1], memory, cache, memory_states[core], clocks[core]);
+    cores[core].mem(pipelined_instructions[1], memory, memory_states[core], clocks[core]);
 
     cores[core].execute(pipelined_instructions[2]);
 
     cores[core].decode(pipelined_instructions[3]);
 
-    cores[core].fetch(memory, pipelined_instructions[4], cache, clocks[core]);
+    cores[core].fetch(memory, pipelined_instructions[4], clocks[core]);
 
     branchPredictor.predict(pipelined_instructions[4]);
 

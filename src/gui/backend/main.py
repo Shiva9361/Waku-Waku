@@ -167,7 +167,6 @@ def run():
                 file0, file1, request.form["pipeline"] == "true", request.form["forward"] == "true", latencies, cache_properties)
             clear()
             stats = processor.getStats()
-            print()
             for _ in stats:
                 for key in _:
                     if key == "IPC":
@@ -183,10 +182,14 @@ def run():
             session["core1_stats"] = stats[1]
 
             cache_stats = {}
-            cache_stats["hit-rate"] = round(stats[2]["hits"] /
-                                            (stats[2]["hits"]+stats[2]["misses"]) * 100, 2) if (stats[2]["hits"]+stats[2]["misses"]) > 0 else 0
-            cache_stats["miss-rate"] = round(stats[2]["misses"] /
-                                             (stats[2]["hits"]+stats[2]["misses"]) * 100, 2) if (stats[2]["hits"]+stats[2]["misses"]) > 0 else 0
+            cache_stats["hit-rate-0"] = round(stats[2]["hits0"] /
+                                              (stats[2]["hits0"]+stats[2]["misses0"]) * 100, 2) if (stats[2]["hits0"]+stats[2]["misses0"]) > 0 else 0
+            cache_stats["hit-rate-1"] = round(stats[2]["hits1"] /
+                                              (stats[2]["hits1"]+stats[2]["misses1"]) * 100, 2) if (stats[2]["hits1"]+stats[2]["misses1"]) > 0 else 0
+            cache_stats["miss-rate-0"] = round(stats[2]["misses0"] /
+                                               (stats[2]["hits0"]+stats[2]["misses0"]) * 100, 2) if (stats[2]["hits0"]+stats[2]["misses0"]) > 0 else 0
+            cache_stats["miss-rate-1"] = round(stats[2]["misses1"] /
+                                               (stats[2]["hits1"]+stats[2]["misses1"]) * 100, 2) if (stats[2]["hits1"]+stats[2]["misses1"]) > 0 else 0
             session["cache_stats"] = cache_stats
 
             session["cache"] = processor.getCache()
@@ -201,7 +204,7 @@ def run():
                 session["core0_pipeline_states"] = pipeline_states[0]
                 session["core1_pipeline_states"] = pipeline_states[1]
         except Exception as error:
-            print(error)
+            print(error, "hi")
             clear()
 
     return {"message": "Done"}

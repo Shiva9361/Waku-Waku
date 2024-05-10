@@ -47,12 +47,14 @@ private:
 
 public:
     int pc;
+    Cache *cache;
     Core(int pc, int dataloc);
     /*
         Unpipelined
     */
     void savereg();
     void fetch(int *memory);
+    void init_cache(int cache_size, int block_size, int associativity, int policy, int alt_cache);
     void decode();
     int execute(std::map<std::string, int> latencies, int &counter);
     void mem(int *memory);
@@ -60,10 +62,10 @@ public:
     /*
         Pipelined
     */
-    void fetch(int *memory, State &instruction, Cache *cache, int cycle);
+    void fetch(int *memory, State &instruction, int cycle);
     void decode(State &state);
     void execute(State &instruction);
-    void mem(State &instruction, int *memory, Cache *cache, std::unordered_map<int, std::pair<int, int>> &memorystate, int cycle);
+    void mem(State &instruction, int *memory, std::unordered_map<int, std::pair<int, int>> &memorystate, int cycle);
     void writeback(State &instruction, int &instruction_count, int core);
 
     bool predict(int pc);
@@ -78,13 +80,19 @@ Core::Core(int pc, int dataloc)
     this->pc_i = pc;
     this->dataloc = dataloc;
 }
+
+void Core::init_cache(int cache_size, int block_size, int associativity, int policy, int alt_cache)
+{
+    cache = new Cache(cache_size, block_size, associativity, policy, alt_cache);
+}
+
 void Core::fetch(int memory[])
 {
     int_instruction = memory[pc];
     pc++;
 }
 
-void Core::fetch(int memory[], State &state, Cache *cache, int cycle)
+void Core::fetch(int memory[], State &state, int cycle)
 {
     if (state.is_dummy)
     {
@@ -634,7 +642,7 @@ void Core::mem(int *memory)
 #endif
 }
 
-void Core::mem(State &state, int *memory, Cache *cache, std::unordered_map<int, std::pair<int, int>> &memorystate, int cycle)
+void Core::mem(State &state, int *memory, std::unordered_map<int, std::pair<int, int>> &memorystate, int cycle)
 {
 
     if (state.is_dummy)
