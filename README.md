@@ -6,6 +6,13 @@ everything work again
 
 Also prefer running in linux/docker
 
+## 10/5/2034 11:00 pm
+
+I was travelling back home. So Darshan added some stuff.
+Our "Always-Not-Taken" predictor evolved into a "2-bit" predictor(ref-Pokemon) with 'true' have higher priority.
+Also now both the cores have private caches.
+MSI cache coherence protocol was implemented to reduce the amount of traffic in the coherency interconnect.
+
 ## 7/04/2024 11:00 pm
 
 We made frontend for cache and memory.
