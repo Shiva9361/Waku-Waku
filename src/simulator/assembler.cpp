@@ -40,13 +40,12 @@ Assembler::Assembler()
 }
 void Assembler::display(std::string file)
 {
-  File.open(file);
+  std::stringstream File(file);
   std::string line;
   while (std::getline(File, line))
   {
     std::cout << line << std::endl;
   }
-  File.close();
 }
 
 std::pair<std::vector<int>, std::vector<int>> Assembler::assemble(std::string file)
@@ -55,7 +54,8 @@ std::pair<std::vector<int>, std::vector<int>> Assembler::assemble(std::string fi
   std::vector<int> data;
   std::vector<int> result;
   std::map<std::string, int> labels;
-  File.open(file);
+
+  std::stringstream File(file);
   std::string line;
   int lc = 0;
   // Label parser
@@ -97,11 +97,10 @@ std::pair<std::vector<int>, std::vector<int>> Assembler::assemble(std::string fi
     }
     lc++;
   }
-  File.close();
 
-  File.open(file);
+  std::stringstream File2(file);
   int offset = 0;
-  while (std::getline(File, line))
+  while (std::getline(File2, line))
   {
     if (line == "")
     {
@@ -135,11 +134,10 @@ std::pair<std::vector<int>, std::vector<int>> Assembler::assemble(std::string fi
       continue;
     }
   }
-  File.close();
 
-  File.open(file);
+  std::stringstream File3(file);
   int ic = 0;
-  while (std::getline(File, line))
+  while (std::getline(File3, line))
   {
     if (line == "")
     {
@@ -351,7 +349,6 @@ std::pair<std::vector<int>, std::vector<int>> Assembler::assemble(std::string fi
     }
     ic++;
   }
-  File.close();
   result_pair.first = result;
   result_pair.second = data;
   return result_pair;

@@ -28,21 +28,19 @@ more difficult in CPP
 """
 
 
-def preAssembler(file):
-    with open(file, "r") as readfile:
-        data = readfile.readlines()
-        final_data = []
-        for line in data:
-            formatted_line = line.lstrip().replace(
-                ",", " ").replace("\r\n", "\n")
-            tokens = formatted_line.split(" ")
-            # if tokens[0][-1] == ":" and (len(tokens) > 1):
-            #     final_data.append(tokens[0])
-            #     final_data.append(" ".join(tokens[1:]))
-            # else:
-            final_data.append(" ".join(tokens))
-    with open(file, "w") as writefile:
-        writefile.writelines(final_data)
+def preAssembler(data):
+    final_data = []
+    data = data.replace("\r\n", "\n").split("\n")
+    for line in data:
+        formatted_line = line.lstrip().replace(
+            ",", " ").replace("\r\n", "\n").rstrip()
+        tokens = formatted_line.split(" ")
+        # if tokens[0][-1] == ":" and (len(tokens) > 1):
+        #     final_data.append(tokens[0])
+        #     final_data.append(" ".join(tokens[1:]))
+        # else:
+        final_data.append(" ".join(tokens))
+    return "\n".join(final_data)
 
 
 """
@@ -134,21 +132,15 @@ def run():
 
     if request.method == "POST":
         try:
-            file0 = "codes/selection_sort.s"
-            file1 = "codes/bubble_sort.s"
+            code0 = ""
+            code1 = ""
             if request.form["code0"]:
                 content = request.form["code0"]
-                with open("codes/slot0.s", "w") as slot0_file:
-                    slot0_file.write(content)
-                preAssembler("codes/slot0.s")
-                file0 = "codes/slot0.s"
+                code0 = preAssembler(content)
 
             if request.form["code1"]:
                 content = request.form["code1"]
-                with open("codes/slot1.s", "w") as slot0_file:
-                    slot0_file.write(content)
-                preAssembler("codes/slot1.s")
-                file1 = "codes/slot1.s"
+                code1 = preAssembler(content)
 
             latencies = {"addi": int(request.form['addi']), "add": int(request.form['add']), "div": int(request.form['div']),
                          "mul": int(request.form['mul']), "sub": int(request.form['sub']), "fmiss": int(request.form['imiss']),
@@ -163,8 +155,11 @@ def run():
             else:
                 cache_properties.append(1)
 
+            if not code0 or not code1:
+                return
+
             processor = p.Processor(
-                file0, file1, request.form["pipeline"] == "true", request.form["forward"] == "true", latencies, cache_properties)
+                code0, code1, request.form["pipeline"] == "true", request.form["forward"] == "true", latencies, cache_properties)
             clear()
             stats = processor.getStats()
             for _ in stats:
@@ -204,7 +199,7 @@ def run():
                 session["core0_pipeline_states"] = pipeline_states[0]
                 session["core1_pipeline_states"] = pipeline_states[1]
         except Exception as error:
-            print(error, "hi")
+            print(error)
             clear()
 
     return {"message": "Done"}
