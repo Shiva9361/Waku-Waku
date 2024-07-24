@@ -5,7 +5,6 @@ the module built using pybind11
 import processor as p
 from flask import Flask, jsonify, request, session, render_template
 from flask_session import Session
-import os
 from datetime import timedelta
 
 """
@@ -156,7 +155,7 @@ def run():
                 cache_properties.append(1)
 
             if not code0 or not code1:
-                return
+                return {"error": "NA"}
 
             processor = p.Processor(
                 code0, code1, request.form["pipeline"] == "true", request.form["forward"] == "true", latencies, cache_properties)
