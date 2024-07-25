@@ -5,7 +5,6 @@ the module built using pybind11
 import processor as p
 from flask import Flask, jsonify, request, session, render_template
 from flask_session import Session
-from flask_cors import CORS
 from datetime import timedelta
 
 """
@@ -17,7 +16,6 @@ app = Flask(__name__)
 app.secret_key = "not_so_secreta"
 app.config["SESSION_TYPE"] = "filesystem"
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=5)
-CORS(app, origins="*")
 Session(app)
 
 
