@@ -2,15 +2,11 @@
 Importing Required modules including 
 the module built using pybind11
 """
-import processor as p
+import processor as p  # type: ignore
 from flask import Flask, jsonify, request, render_template
 from functools import wraps
 
-"""
-Configuring the flask app to use Sessions
-Sessions allow us to store data for specific 
-users seperately
-"""
+
 app = Flask(__name__)
 
 

@@ -2,6 +2,7 @@
 #define CORE
 #include <unordered_map>
 #include <map>
+#include <memory>
 #include <string>
 #include "cache.h"
 #include "state.h"
@@ -27,7 +28,7 @@ private:
 
 public:
     int pc;
-    Cache *cache;
+    std::unique_ptr<Cache> cache;
     Core(int pc, int dataloc);
     /*
         Unpipelined

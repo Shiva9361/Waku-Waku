@@ -11,7 +11,7 @@ Core::Core(int pc, int dataloc)
 
 void Core::init_cache(int cache_size, int block_size, int associativity, int policy, int alt_cache)
 {
-  cache = new Cache(cache_size, block_size, associativity, policy, alt_cache);
+  cache = std::make_unique<Cache>(cache_size, block_size, associativity, policy, alt_cache);
 }
 
 void Core::fetch(int memory[])
