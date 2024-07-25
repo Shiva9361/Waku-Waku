@@ -15,7 +15,7 @@ public:
     std::ifstream File;
 
     void display(std::string file);
-    std::pair<std::vector<int>, std::vector<int>> assemble(std::string file);
+    std::pair<std::vector<int>, std::vector<int>> assemble(std::string file, bool &error);
     Assembler();
 };
 

@@ -48,7 +48,7 @@ void Assembler::display(std::string file)
   }
 }
 
-std::pair<std::vector<int>, std::vector<int>> Assembler::assemble(std::string file)
+std::pair<std::vector<int>, std::vector<int>> Assembler::assemble(std::string file, bool &error)
 {
   std::pair<std::vector<int>, std::vector<int>> result_pair;
   std::vector<int> data;
@@ -153,6 +153,11 @@ std::pair<std::vector<int>, std::vector<int>> Assembler::assemble(std::string fi
     int index = 0;
     if (tokens[index] == "add")
     {
+      if (tokens.size() != 4)
+      {
+        error = true;
+        return {};
+      }
       std::string opcode = "0110011";
       std::string rd = lookup_table[tokens[1]];
       std::string func3 = "000";
@@ -165,6 +170,11 @@ std::pair<std::vector<int>, std::vector<int>> Assembler::assemble(std::string fi
     }
     else if (tokens[index] == "sub")
     {
+      if (tokens.size() != 4)
+      {
+        error = true;
+        return {};
+      }
       std::string opcode = "0110011";
       std::string rd = lookup_table[tokens[index + 1]];
       std::string func3 = "000";
@@ -177,6 +187,11 @@ std::pair<std::vector<int>, std::vector<int>> Assembler::assemble(std::string fi
     }
     else if (tokens[index] == "mul")
     {
+      if (tokens.size() != 4)
+      {
+        error = true;
+        return {};
+      }
       std::string opcode = "0110011";
       std::string rd = lookup_table[tokens[index + 1]];
       std::string func3 = "000";
@@ -189,6 +204,11 @@ std::pair<std::vector<int>, std::vector<int>> Assembler::assemble(std::string fi
     }
     else if (tokens[index] == "div")
     {
+      if (tokens.size() != 4)
+      {
+        error = true;
+        return {};
+      }
       std::string opcode = "0110011";
       std::string rd = lookup_table[tokens[index + 1]];
       std::string func3 = "100";
@@ -201,6 +221,11 @@ std::pair<std::vector<int>, std::vector<int>> Assembler::assemble(std::string fi
     }
     else if (tokens[index] == "lw")
     {
+      if (tokens.size() != 3)
+      {
+        error = true;
+        return {};
+      }
       std::string opcode = "0000011";
       std::string rd = lookup_table[tokens[index + 1]];
       std::string func3 = "010";
@@ -219,6 +244,11 @@ std::pair<std::vector<int>, std::vector<int>> Assembler::assemble(std::string fi
     }
     else if (tokens[index] == "sw")
     {
+      if (tokens.size() != 3)
+      {
+        error = true;
+        return {};
+      }
       std::string opcode = "0100011";
       std::string rs1 = lookup_table[tokens[index + 1]];
       std::string func3 = "010";
@@ -239,6 +269,11 @@ std::pair<std::vector<int>, std::vector<int>> Assembler::assemble(std::string fi
     }
     else if (tokens[index] == "jal")
     {
+      if (tokens.size() != 3)
+      {
+        error = true;
+        return {};
+      }
       std::string opcode = "1101111";
       std::string rd = lookup_table[tokens[index + 1]];
       int int_imm = labels[tokens[index + 2]];
@@ -250,6 +285,11 @@ std::pair<std::vector<int>, std::vector<int>> Assembler::assemble(std::string fi
     }
     else if (tokens[index] == "bne")
     {
+      if (tokens.size() != 4)
+      {
+        error = true;
+        return {};
+      }
       std::string opcode = "1100011";
       std::string func3 = "001";
       std::string rs1 = lookup_table[tokens[index + 1]];
@@ -265,6 +305,11 @@ std::pair<std::vector<int>, std::vector<int>> Assembler::assemble(std::string fi
     }
     else if (tokens[index] == "beq")
     {
+      if (tokens.size() != 4)
+      {
+        error = true;
+        return {};
+      }
       std::string opcode = "1100011";
       std::string func3 = "000";
       std::string rs1 = lookup_table[tokens[index + 1]];
@@ -280,6 +325,11 @@ std::pair<std::vector<int>, std::vector<int>> Assembler::assemble(std::string fi
     }
     else if (tokens[index] == "blt")
     {
+      if (tokens.size() != 4)
+      {
+        error = true;
+        return {};
+      }
       std::string opcode = "1100011";
       std::string func3 = "100";
       std::string rs1 = lookup_table[tokens[index + 1]];
@@ -295,6 +345,11 @@ std::pair<std::vector<int>, std::vector<int>> Assembler::assemble(std::string fi
     }
     else if (tokens[index] == "bge")
     {
+      if (tokens.size() != 4)
+      {
+        error = true;
+        return {};
+      }
       std::string opcode = "1100011";
       std::string func3 = "101";
       std::string rs1 = lookup_table[tokens[index + 1]];
@@ -310,6 +365,11 @@ std::pair<std::vector<int>, std::vector<int>> Assembler::assemble(std::string fi
     }
     else if (tokens[index] == "addi")
     {
+      if (tokens.size() != 4)
+      {
+        error = true;
+        return {};
+      }
       std::string opcode = "0010011";
       std::string rd = lookup_table[tokens[index + 1]];
       std::string func3 = "000";
@@ -323,6 +383,11 @@ std::pair<std::vector<int>, std::vector<int>> Assembler::assemble(std::string fi
     }
     else if (tokens[index] == "la")
     {
+      if (tokens.size() != 3)
+      {
+        error = true;
+        return {};
+      }
       std::string opcode = "0010111";
       std::string rd = lookup_table[tokens[index + 1]];
       int int_imm = labels[tokens[index + 2]];
@@ -334,6 +399,11 @@ std::pair<std::vector<int>, std::vector<int>> Assembler::assemble(std::string fi
     }
     else if (tokens[index] == "j")
     {
+      if (tokens.size() != 2)
+      {
+        error = true;
+        return {};
+      }
       std::string opcode = "1101111";
       std::string rd = "00000";
       int int_imm = labels[tokens[index + 1]];

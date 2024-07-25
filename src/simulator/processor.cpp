@@ -25,8 +25,9 @@ Processor::Processor(std::string file1, std::string file2, bool pipeline, bool f
   */
   int dataloc1 = 84;
   int dataloc2 = 943;
-  std::pair<std::vector<int>, std::vector<int>> result1 = assembler.assemble(file1);
-  std::pair<std::vector<int>, std::vector<int>> result2 = assembler.assemble(file2);
+  bool error1 = false, error2 = false;
+  std::pair<std::vector<int>, std::vector<int>> result1 = assembler.assemble(file1, error1);
+  std::pair<std::vector<int>, std::vector<int>> result2 = assembler.assemble(file2, error2);
 
   std::vector<int> instructions1 = result1.first;
   std::vector<int> instructions2 = result2.first;
