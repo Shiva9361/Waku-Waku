@@ -10,4 +10,5 @@
 
 ## Build
 The source C++ can be built using the CMAKELIST file provided to get a python class
-THe python class can then be integrated into any project
+
+The python class can then be integrated into any project
